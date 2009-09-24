@@ -9,10 +9,10 @@ AC_ARG_WITH([ming-config],
 if test [ -n "$ming_config" ] ; then
     AC_SUBST([MING_CONFIG],["${ming_config}"])
 fi
-echo "ming-config: ${MING_CONFIG}"
+AC_MSG_CHECKING([whether ming is installed])
 if test `${MING_CONFIG} --version`;
 then
-
+	AC_MSG_RESULT([yes])
 	PKG_CPPFLAGS=`${MING_CONFIG} --cflags`
 	PKG_LIBS=`${MING_CONFIG} --libs`
 

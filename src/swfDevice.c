@@ -13,7 +13,7 @@ int firstTry(void)
 
         // Initialise the movie structure in memory
         Ming_init();
-        test_movie_movie = newSWFMovieWithVersion(7);
+        test_movie = newSWFMovieWithVersion(7);
 
         // Set the background color for the movie
         SWFMovie_setBackground(test_movie, 0x00, 0x00, 0x00);
