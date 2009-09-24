@@ -1,5 +1,5 @@
 /*
- *  tikzDevice, (C) 2009 Cameron Bracken
+ *  swfDevice, (C) 2009 Cameron Bracken
  *
  *  A graphics device for R : 
  *  	A Computer Language for Statistical Data Analysis
@@ -23,7 +23,6 @@
  */
 
 #include "swfDevice.h"
-#define DEBUG TRUE
 
 int firstTry(void)
 {
