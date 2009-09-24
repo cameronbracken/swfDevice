@@ -1,3 +1,3 @@
 swf <- function(){
-    .External('firstTry',package='swfDevice')
+    invisible(.External('firstTry',package='swfDevice'))
 }
