@@ -22,6 +22,12 @@
  *  http://www.r-project.org/Licenses/
  */
 
+// Access the libming funtions
+#include <ming.h>
+// We are writing to files so we need stdio.h
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "swfDevice.h"
 #define DEBUG TRUE
 
@@ -81,7 +87,7 @@ SEXP swfDevice ( SEXP args ){
 		 * The pDevDesc variable specifies which funtions and components 
 		 * which describe the specifics of this graphics device. After
 		 * setup, this information will be incorporated into the pGEDevDesc
-		 * variable tikzDev.
+		 * variable swfDev.
 		*/ 
 		pDevDesc deviceInfo;
 
@@ -107,7 +113,7 @@ SEXP swfDevice ( SEXP args ){
 			error("SWF device setup was unsuccessful!");
 		}
 
-		/* Create tikzDev as a Graphics Engine device using deviceInfo. */
+		/* Create swfDev as a Graphics Engine device using deviceInfo. */
 		swfDev = GEcreateDevDesc( deviceInfo );
 
 		// Register the device as an avaiable graphics device in the R
@@ -137,9 +143,9 @@ static Rboolean SWF_Setup(
 	const char *bg, const char *fg ){
 
 	/* 
-	 * Create tikzInfo, this variable contains information which is
-	 * unique to the implementation of the TikZ Device. The deviceInfo
-	 * variable contains a slot into which tikzInfo can be placed so that
+	 * Create swfInfo, this variable contains information which is
+	 * unique to the implementation of the SWF Device. The deviceInfo
+	 * variable contains a slot into which swfInfo can be placed so that
 	 * this information persists and is retrievable during the lifespan
 	 * of this device.
 	 *
@@ -147,7 +153,7 @@ static Rboolean SWF_Setup(
 	 * which is a pointer to a DevDesc variable, can be found under
 	 * struct _DevDesc in the R header file GraphicsDevice.h
 	 *
-	 * tikzInfo is a structure which is defined in the file tikzDevice.h
+	 * swfInfo is a structure which is defined in the file swfDevice.h
 	 *
 	*/
 	swfDevDesc *swfInfo;
@@ -165,19 +171,19 @@ static Rboolean SWF_Setup(
 		return FALSE;
 
 	/* 
-	 * Initialize tikzInfo, return false if this fails. A false return
+	 * Initialize swfInfo, return false if this fails. A false return
 	 * value will cause the whole device initialization routine to fail.
 	*/
 	if( !( swfInfo = (swfDevDesc *) malloc(sizeof(swfDevDesc)) ) )
 		return FALSE;
 
-	/* Copy TikZ-specific information to the tikzInfo variable. */
+	/* Copy SWF-specific information to the swfInfo variable. */
 	strcpy( swfInfo->outFileName, fileName);
 	swfInfo->debug = DEBUG;
 	swfInfo->nFrames = 1;
 
 	/* Incorporate swfInfo into deviceInfo. */
-	deviceInfo->deviceSpecific = (void *) tikzInfo;
+	deviceInfo->deviceSpecific = (void *) swfInfo;
 
 	/* 
 	 * These next statements define the capabilities of the device.
@@ -191,7 +197,7 @@ static Rboolean SWF_Setup(
 
 	/* 
 	 * Define the gamma factor- used to adjust the luminosity of an image. 
-	 * Set to 1 since there is no gamma correction in the TikZ device. Also,
+	 * Set to 1 since there is no gamma correction in the SWF device. Also,
 	 * canChangeGamma is set to FALSE to disallow user adjustment of this
 	 * default
 	*/
@@ -217,7 +223,7 @@ static Rboolean SWF_Setup(
 	 * canClip specifies whether the device implements routines for filtering
 	 * plotting input such that it falls within a rectangular clipping area.
 	 * Implementing this leads to an interesting design choice- to implement
-	 * clipping here in the C code or hand it off to the TikZ clipping 
+	 * clipping here in the C code or hand it off to the SWF clipping 
 	 * routines.  Clipping at the C level may reduce  and simplify the final 
 	 * output file by not printing objects that fall outside the plot 
 	 * boundaries. 
@@ -282,7 +288,7 @@ static Rboolean SWF_Setup(
 
 	/* 
 	 * Apparently these are supposed to center text strings over the points at
-	 * which they are plotted. TikZ does this automagically.
+	 * which they are plotted. SWF does this automagically.
 	 *
 	 * We hope.
 	 *
@@ -304,7 +310,7 @@ static Rboolean SWF_Setup(
 
 
 	/* 
-	 * Connect R graphic function hooks to TikZ Routines implemented in this
+	 * Connect R graphic function hooks to SWF Routines implemented in this
 	 * file. Each routine performs a specific function such as adding text, 
 	 * drawing a line or reporting/adjusting the status of the device.
 	*/
@@ -333,22 +339,6 @@ static Rboolean SWF_Setup(
 	deviceInfo->locator = SWF_Locator;
 	deviceInfo->mode = SWF_Mode;
 
-	/*Initilize the SWF movie*/
-	Ming_init();
-	swfInfo->movie = newSWFMovieWithVersion(7);
-
-	// Set the background color for the movie
-	SWFMovie_setBackground(swfInfo->movie, R_RED(color), R_GREEN(color), R_BLUE(color));
-
-	// Set the frame rate for the movie to 12 frames per second
-	SWFMovie_setRate(swfInfo->movie, 12.0);
-
-	// Set the total number of frames in the movie to 120
-	SWFMovie_setNumberOfFrames(swfInfo->movie, 1);
-	
-	// Set the desired compression level for the output (9 = maximum compression)
-	Ming_setSWFCompression(9);
-
 	/* Call SWF_Open to create and initialize the output file. */
 	if( !SWF_Open( deviceInfo ) )
 		return FALSE;
@@ -365,62 +355,6 @@ static Rboolean SWF_Setup(
 double dim2dev( double length ){
 	return length*72.27;
 }
-
-
-static Rboolean SWF_Open( pDevDesc deviceInfo ){
-
-	/* 
-	 * Shortcut pointers to variables of interest. 
-	 * It seems like there HAS to be a more elegent way of accesing
-	 * these...
-	*/
-	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
-
-	if( !( swfInfo->outputFile = fopen(R_ExpandFileName(swfInfo->outFileName), "w") ) )
-		return FALSE;
-
-		// Create local variables
-		SWFFillStyle fill_style;
-		SWFShape square_definition;
-		SWFDisplayItem square_display_item;
-
-        // Create a new fill style (semi-transparent)
-        fill_style = newSWFSolidFillStyle(0xa5, 0xa5, 0xff, 0x80);
-        
-        // Create a square
-        square_definition = newSWFShape();
-        SWFShape_setRightFillStyle(square_definition, fill_style);
-        SWFShape_drawLine(square_definition, 100.0, 0.0);
-        SWFShape_drawLine(square_definition, 0.0, 100.0);
-        SWFShape_drawLine(square_definition, -100.0, 0.0);
-        SWFShape_drawLine(square_definition, 0.0, -100.0);
-
-        // Add the square to the movie (at 0,0)
-        square_display_item = SWFMovie_add(swfInfo->movie, (SWFBlock) square_definition);
-
-        // Move to 100, 100
-        SWFDisplayItem_moveTo(square_display_item, 100.00, 100.0);
-
-	
-	return TRUE;
-
-}
-
-static void SWF_Close( pDevDesc deviceInfo){
-
-	/* Shortcut pointers to variables of interest. */
-	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
-	
-	// Save the swf movie file to disk
-    SWFMovie_save(swfInfo->movie, swfInfo->fileName);
-
-	/* Close the file and destroy the tikzInfo structure. */
-	fclose(tikzInfo->outputFile);
-	free(tikzInfo);
-
-}
-
-
 
 void firstTry(void)
 {
@@ -442,7 +376,7 @@ void firstTry(void)
         SWFMovie_setRate(test_movie, 12.0);
 
         // Set the total number of frames in the movie to 120
-        SWFMovie_setNumberOfFrames(test_movie, 120);
+        SWFMovie_setNumberOfFrames(test_movie, 1);
 
         // Create a new fill style (semi-transparent)
         fill_style = newSWFSolidFillStyle(0xa5, 0xa5, 0xff, 0x80);
@@ -467,12 +401,84 @@ void firstTry(void)
         // Save the swf movie file to disk
         SWFMovie_save(test_movie, "ming-example.swf");
 
-        return void;
+		return;
 }
 
-/* Utility routines. */
-static void SWF_Close( pDevDesc deviceInfo ){}
+static Rboolean SWF_Open( pDevDesc deviceInfo ){
 
+	/* 
+	 * Shortcut pointers to variables of interest. 
+	 * It seems like there HAS to be a more elegent way of accesing
+	 * these...
+	*/
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+
+	if( !( swfInfo->outputFile = fopen(R_ExpandFileName(swfInfo->outFileName), "w") ) )
+		return FALSE;
+
+	firstTry();
+	/*Initilize the SWF movie*/
+	Ming_init();
+	swfInfo->movie = newSWFMovieWithVersion(7);
+
+	// Set the background color for the movie
+	SWFMovie_setBackground(swfInfo->movie, 0x00, 0x00, 0x00);
+
+	// Set the frame rate for the movie to 12 frames per second
+	SWFMovie_setRate(swfInfo->movie, 12.0);
+
+	// Set the total number of frames in the movie to 120
+	SWFMovie_setNumberOfFrames(swfInfo->movie, 1);
+
+	// Create local variables
+	SWFFillStyle fill_style;
+	SWFShape square_definition;
+	SWFDisplayItem square_display_item;
+
+	// Create a new fill style (semi-transparent)
+	fill_style = newSWFSolidFillStyle(0xa5, 0xa5, 0xff, 0x80);
+
+	// Create a square
+	square_definition = newSWFShape();
+	SWFShape_setRightFillStyle(square_definition, fill_style);
+	SWFShape_drawLine(square_definition, 100.0, 0.0);
+	SWFShape_drawLine(square_definition, 0.0, 100.0);
+	SWFShape_drawLine(square_definition, -100.0, 0.0);
+	SWFShape_drawLine(square_definition, 0.0, -100.0);
+
+	// Add the square to the movie (at 0,0)
+	square_display_item = SWFMovie_add(swfInfo->movie, (SWFBlock) square_definition);
+
+	// Move to 100, 100
+	SWFDisplayItem_moveTo(square_display_item, 100.00, 100.0);
+
+
+	return TRUE;
+
+}
+
+static void SWF_Close( pDevDesc deviceInfo){
+
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	// Set the desired compression level for the output (9 = maximum compression)
+	Ming_setSWFCompression(9);
+	
+	// Save the swf movie file to disk
+    SWFMovie_save(swfInfo->movie, (char *) swfInfo->outputFile);
+
+	/* Close the file and destroy the swInfo structure. */
+	fclose(swfInfo->outputFile);
+	free(swfInfo);
+
+}
+
+
+
+
+
+/* Utility routines. */
 static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){}
 
 static void SWF_Clip( double x0, double x1,

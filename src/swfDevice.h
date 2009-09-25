@@ -8,17 +8,12 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/GraphicsEngine.h>
-// Access the libming funtions
-#include <ming.h>
-// We are writing to files so we need stdio.h
-#include <stdio.h>
-#include <stdlib.h>
 
-typedef struct{
+typedef struct swfDevDesc{
 	FILE *outputFile;
 	char outFileName[128];
 	Rboolean debug;
-	SWFmovie movie;
+	SWFMovie movie;
 	int nFrames;
 } swfDevDesc;
 
@@ -67,5 +62,10 @@ static void SWF_Polyline( int n, double *x, double *y,
 static void SWF_Polygon( int n, double *x, double *y,
 		pGEcontext plotParams, pDevDesc deviceInfo );
 
+/* Dummy routines. */
+static void SWF_Activate( pDevDesc deviceInfo );
+static void SWF_Deactivate( pDevDesc deviceInfo );
+static Rboolean SWF_Locator( double *x, double *y, pDevDesc deviceInfo );
+static void SWF_Mode( int mode, pDevDesc deviceInfo );
 
 #endif // End of Once Only header
