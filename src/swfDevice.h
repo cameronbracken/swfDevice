@@ -17,7 +17,10 @@
 typedef struct{
 	FILE *outputFile;
 	char outFileName[128];
-} SWFDevDesc;
+	Rboolean debug;
+	SWFmovie movie;
+	int nFrames;
+} swfDevDesc;
 
 
 /* Function Prototypes */
