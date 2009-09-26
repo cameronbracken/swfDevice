@@ -10,7 +10,6 @@
 #include <R_ext/GraphicsEngine.h>
 
 typedef struct swfDevDesc{
-	FILE *outputFile;
 	char outFileName[128];
 	Rboolean debug;
 	SWFMovie movie;

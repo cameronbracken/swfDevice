@@ -181,6 +181,9 @@ static Rboolean SWF_Setup(
 	strcpy( swfInfo->outFileName, fileName);
 	swfInfo->debug = DEBUG;
 	swfInfo->nFrames = 1;
+	/*Initilize the SWF movie*/
+	Ming_init();
+	swfInfo->movie = newSWFMovieWithVersion(7);
 
 	/* Incorporate swfInfo into deviceInfo. */
 	deviceInfo->deviceSpecific = (void *) swfInfo;
@@ -413,13 +416,10 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 	*/
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
 
-	if( !( swfInfo->outputFile = fopen(R_ExpandFileName(swfInfo->outFileName), "w") ) )
-		return FALSE;
+	//if( !( swfInfo->outputFile = fopen(R_ExpandFileName(swfInfo->outFileName), "w") ) )
+	//	return FALSE;
 
-	firstTry();
-	/*Initilize the SWF movie*/
-	Ming_init();
-	swfInfo->movie = newSWFMovieWithVersion(7);
+	//firstTry();
 
 	// Set the background color for the movie
 	SWFMovie_setBackground(swfInfo->movie, 0x00, 0x00, 0x00);
@@ -466,10 +466,10 @@ static void SWF_Close( pDevDesc deviceInfo){
 	Ming_setSWFCompression(9);
 	
 	// Save the swf movie file to disk
-    SWFMovie_save(swfInfo->movie, (char *) swfInfo->outputFile);
+    SWFMovie_save(swfInfo->movie, swfInfo->outFileName);
 
 	/* Close the file and destroy the swInfo structure. */
-	fclose(swfInfo->outputFile);
+	//fclose(swfInfo->outputFile);
 	free(swfInfo);
 
 }
