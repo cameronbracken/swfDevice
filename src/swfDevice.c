@@ -183,7 +183,7 @@ static Rboolean SWF_Setup(
 	swfInfo->nFrames = 1;
 	/*Initilize the SWF movie*/
 	Ming_init();
-	swfInfo->movie = newSWFMovieWithVersion(7);
+	swfInfo->movie = newSWFMovieWithVersion(8);
 
 	/* Incorporate swfInfo into deviceInfo. */
 	deviceInfo->deviceSpecific = (void *) swfInfo;
@@ -293,7 +293,7 @@ static Rboolean SWF_Setup(
 	 * Apparently these are supposed to center text strings over the points at
 	 * which they are plotted. SWF does this automagically.
 	 *
-	 * We hope.
+	 * I hope.
 	 *
 	*/
 	deviceInfo->xCharOffset = 0;	
@@ -353,10 +353,10 @@ static Rboolean SWF_Setup(
 /*
  * This function is responsible for converting lengths given in page
  * dimensions (ie. inches, cm, etc.) to device dimensions (currenty
- * points- 1/72.27 of an inch). 
+ * points- 1/72 of an inch). 
 */
 double dim2dev( double length ){
-	return length*72.27;
+	return length*72;
 }
 
 void firstTry(void)
@@ -416,42 +416,37 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 	*/
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
 
-	//if( !( swfInfo->outputFile = fopen(R_ExpandFileName(swfInfo->outFileName), "w") ) )
-	//	return FALSE;
-
 	//firstTry();
+	//Debug log
+	if( swfInfo->debug == TRUE ){
+		if( !( swfInfo->logFile = fopen(R_ExpandFileName("swfDevice.log"), "w") ) )
+			return FALSE;
+			
+		fprintf(swfInfo->logFile,
+			"Begin swf output\n");	
+		fprintf(swfInfo->logFile,
+			"Setting dimensions %10.4f by %10.4f\n",
+			deviceInfo->right, deviceInfo->top);	
+		fprintf(swfInfo->logFile,
+			"Setting background %3d, %3d, %3d\n",
+			R_RED(deviceInfo->startfill), 
+			R_GREEN(deviceInfo->startfill), 
+			R_BLUE(deviceInfo->startfill));
+	}
 
 	// Set the background color for the movie
-	SWFMovie_setBackground(swfInfo->movie, 0x00, 0x00, 0x00);
+	SWFMovie_setBackground(swfInfo->movie, 
+		R_RED(deviceInfo->startfill), 
+		R_GREEN(deviceInfo->startfill), 
+		R_BLUE(deviceInfo->startfill));
+		
+	SWFMovie_setDimension(swfInfo->movie, deviceInfo->right, deviceInfo->top);
 
 	// Set the frame rate for the movie to 12 frames per second
-	SWFMovie_setRate(swfInfo->movie, 12.0);
+	SWFMovie_setRate(swfInfo->movie, 2.0);
 
 	// Set the total number of frames in the movie to 120
 	SWFMovie_setNumberOfFrames(swfInfo->movie, 1);
-
-	// Create local variables
-	SWFFillStyle fill_style;
-	SWFShape square_definition;
-	SWFDisplayItem square_display_item;
-
-	// Create a new fill style (semi-transparent)
-	fill_style = newSWFSolidFillStyle(0xa5, 0xa5, 0xff, 0x80);
-
-	// Create a square
-	square_definition = newSWFShape();
-	SWFShape_setRightFillStyle(square_definition, fill_style);
-	SWFShape_drawLine(square_definition, 100.0, 0.0);
-	SWFShape_drawLine(square_definition, 0.0, 100.0);
-	SWFShape_drawLine(square_definition, -100.0, 0.0);
-	SWFShape_drawLine(square_definition, 0.0, -100.0);
-
-	// Add the square to the movie (at 0,0)
-	square_display_item = SWFMovie_add(swfInfo->movie, (SWFBlock) square_definition);
-
-	// Move to 100, 100
-	SWFDisplayItem_moveTo(square_display_item, 100.00, 100.0);
-
 
 	return TRUE;
 
@@ -462,14 +457,17 @@ static void SWF_Close( pDevDesc deviceInfo){
 	/* Shortcut pointers to variables of interest. */
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
 	
+	//If there is an open deug log, close it
+	if( swfInfo->debug == TRUE )
+		fclose(swfInfo->logFile);
+	
 	// Set the desired compression level for the output (9 = maximum compression)
-	Ming_setSWFCompression(9);
+	Ming_setSWFCompression(1);
 	
 	// Save the swf movie file to disk
     SWFMovie_save(swfInfo->movie, swfInfo->outFileName);
 
-	/* Close the file and destroy the swInfo structure. */
-	//fclose(swfInfo->outputFile);
+	/* Destroy the swfInfo structure. */
 	free(swfInfo);
 
 }
@@ -479,7 +477,20 @@ static void SWF_Close( pDevDesc deviceInfo){
 
 
 /* Utility routines. */
-static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){}
+static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
+	
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	/*
+	 * Add a new frame to the current movie.
+	 * This function adds a new frame to the current movie. All items added, removed
+	 * manipulated effect this frame and probably following frames.
+	 */
+	SWFMovie_nextFrame( swfInfo->movie );
+	swfInfo->nFrames++;
+	
+}
 
 static void SWF_Clip( double x0, double x1,
 		double y0, double y1, pDevDesc deviceInfo ){}
@@ -503,25 +514,125 @@ static void SWF_MetricInfo( int c, const pGEcontext plotParams,
 			width = 0;
 }
 static double SWF_StrWidth( const char *str,
-		const pGEcontext plotParams, pDevDesc deviceInfo ){
+		const pGEcontext plotParams, pDevDesc deviceInfo )
+{
 	return 0.0;
 }
+
 static void SWF_Text( double x, double y, const char *str,
-		double rot, double hadj, const pGEcontext plotParams, pDevDesc deviceInfo){}
+		double rot, double hadj, const pGEcontext plotParams, pDevDesc deviceInfo)
+{
+			
+			
+}
 
 
-/* Drawing routines. */
+/* SWF_line draws a line between the two points given. */
 static void SWF_Line( double x1, double y1,
-		double x2, double y2, const pGEcontext plotParams, pDevDesc deviceInfo ){}
+		double x2, double y2, const pGEcontext plotParams, pDevDesc deviceInfo )
+{
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	//If debugging, print info to log file
+	if(swfInfo->debug == TRUE){
+		fprintf(swfInfo->logFile,
+			"Drawing line from (%10.4f, %10.4f) to (%10.4f, %10.4f)\n",
+			x1,y1,x2,y2);
+		fprintf(swfInfo->logFile,
+			"Setting line color %3d, %3d, %3d\n",
+			R_RED(plotParams->col), 
+			R_GREEN(plotParams->col), 
+			R_BLUE(plotParams->col));
+		fprintf(swfInfo->logFile,
+			"Setting line weight %f\n",
+			plotParams->lwd );
+	}
+	
+	SWFShape line;
+	line = newSWFShape();
+	SWFDisplayItem line_display_item;
+	
+	SWFShape_movePenTo(line, x1, y1);
+	
+	//honor the other line styles here such as 
+	// lty, lend, ljoin, ...
+	SWFShape_setLine2(line,
+		(unsigned short) plotParams->lwd,
+		R_RED(plotParams->col), 
+		R_GREEN(plotParams->col), 
+		R_BLUE(plotParams->col),
+		R_ALPHA(plotParams->col),
+		SWF_LINESTYLE_CAP_SQUARE |
+		SWF_LINESTYLE_JOIN_ROUND |
+		SWF_LINESTYLE_FLAG_HINTING,
+		plotParams->lmitre);
+	
+	SWFShape_drawLine(line, x2, y2);
+	
+	SWFMovie_add(swfInfo->movie, (SWFBlock) line);
+	
+}
 		
 static void SWF_Circle( double x, double y, double r,
-		const pGEcontext plotParams, pDevDesc deviceInfo ){}
+		const pGEcontext plotParams, pDevDesc deviceInfo ){
+	
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile,
+			"Drawing Circle at x = %f, y = %f, r = %f\n",
+			x,y,r);
+	
+	SWFShape circle;
+	circle = newSWFShape();
+	
+	SWFShape_movePenTo(circle, x, y);
+	
+	SWFShape_drawCircle(circle, r);
+	
+	SWFMovie_add(swfInfo->movie, (SWFBlock) circle);
+			
+}
 		
 static void SWF_Rectangle( double x0, double y0, 
 		double x1, double y1, const pGEcontext plotParams, pDevDesc deviceInfo ){}
 		
 static void SWF_Polyline( int n, double *x, double *y,
-		pGEcontext plotParams, pDevDesc deviceInfo ){}
+		pGEcontext plotParams, pDevDesc deviceInfo )
+{
+	
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;	
+	
+	SWFShape line;
+	line = newSWFShape();
+
+	SWFShape_movePenTo(line, x[0], y[0]);
+
+	//honor the other line styles here such as 
+	// lty, lend, ljoin, ...
+	SWFShape_setLine2(line,
+		plotParams->lwd,
+		R_RED(plotParams->col), 
+		R_GREEN(plotParams->col), 
+		R_BLUE(plotParams->col),
+		R_TRANSPARENT(plotParams->col),
+		SWF_LINESTYLE_CAP_SQUARE |
+		SWF_LINESTYLE_JOIN_ROUND |
+		SWF_LINESTYLE_FLAG_HINTING,
+		plotParams->lmitre);
+	
+	/* Print coordinates for the middle segments of the line. */
+	int i;
+	for ( i = 1; i < n; i++ ){
+		SWFShape_drawLine(line, x[i], y[i]);	
+	}
+	
+	SWFMovie_add(swfInfo->movie, (SWFBlock) line);
+
+}
 		
 static void SWF_Polygon( int n, double *x, double *y,
 		pGEcontext plotParams, pDevDesc deviceInfo ){}

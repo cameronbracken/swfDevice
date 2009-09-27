@@ -28,7 +28,7 @@ else
 	echo "If you have installed the ming libraries, then make sure that"
 	echo "ming-config is in your path. Try typing ming-config at a shell"
 	echo "prompt and see if it runs. If not, use:"
-	echo " --configure-args='--with-ming-config=/usr/local/bin/ming-config'"	
+	echo " --configure-args='--with-ming-config=/path/to/ming-config'"	
 	echo "with appropriate values for your installation."
 	echo "******************************************************************"
 	echo ""

@@ -5,6 +5,6 @@ Version: 0.1
 Date: 2009-09-24
 Author: Cameron Bracken
 Maintainer: Cameron Bracken <cameorn.bracken@gmail.com>
-Description: Allows for R graphics output as swf files. Utilizes the ming libraries. 
+Description: Allows for R graphics output as swf files. Utilizes the ming library. 
 License: GPL (>=2)
 LazyLoad: yes
