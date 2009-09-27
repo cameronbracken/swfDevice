@@ -14,6 +14,7 @@ typedef struct swfDevDesc{
 	char outFileName[128];
 	Rboolean debug;
 	SWFMovie movie;
+	SWFShape line;
 	int nFrames;
 } swfDevDesc;
 

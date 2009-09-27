@@ -184,6 +184,7 @@ static Rboolean SWF_Setup(
 	/*Initilize the SWF movie*/
 	Ming_init();
 	swfInfo->movie = newSWFMovieWithVersion(8);
+	swfInfo->line = newSWFShape();
 
 	/* Incorporate swfInfo into deviceInfo. */
 	deviceInfo->deviceSpecific = (void *) swfInfo;
@@ -423,12 +424,12 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 			return FALSE;
 			
 		fprintf(swfInfo->logFile,
-			"Begin swf output\n");	
+			"SWF_Open Begin swf output\n");	
 		fprintf(swfInfo->logFile,
-			"Setting dimensions %10.4f by %10.4f\n",
+			"SWF_Open Setting dimensions %10.4f by %10.4f\n",
 			deviceInfo->right, deviceInfo->top);	
 		fprintf(swfInfo->logFile,
-			"Setting background %3d, %3d, %3d\n",
+			"SWF_Open Setting background %3d, %3d, %3d\n",
 			R_RED(deviceInfo->startfill), 
 			R_GREEN(deviceInfo->startfill), 
 			R_BLUE(deviceInfo->startfill));
@@ -458,8 +459,23 @@ static void SWF_Close( pDevDesc deviceInfo){
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
 	
 	//If there is an open deug log, close it
-	if( swfInfo->debug == TRUE )
+	if( swfInfo->debug == TRUE ){
+		fprintf(swfInfo->logFile,
+			"SWF_Close end swf output\n");
 		fclose(swfInfo->logFile);
+	}
+	
+	SWFShape square_definition;
+   
+    square_definition = newSWFShape();
+    SWFShape_setLine(square_definition, 1, 0x00, 0x00, 0x00, 0xff);
+    SWFShape_drawLine(square_definition, 100.0, 0.0);
+    SWFShape_drawLine(square_definition, 0.0, 100.0);
+    SWFShape_drawLine(square_definition, -100.0, 0.0);
+    SWFShape_drawLine(square_definition, 0.0, -100.0);
+
+    // Add the square to the movie (at 0,0)
+	SWFMovie_add(swfInfo->movie, (SWFBlock) square_definition);
 	
 	// Set the desired compression level for the output (9 = maximum compression)
 	Ming_setSWFCompression(1);
@@ -537,27 +553,23 @@ static void SWF_Line( double x1, double y1,
 	//If debugging, print info to log file
 	if(swfInfo->debug == TRUE){
 		fprintf(swfInfo->logFile,
-			"Drawing line from (%10.4f, %10.4f) to (%10.4f, %10.4f)\n",
+			"SWF_Line Drawing line from (%10.4f, %10.4f) to (%10.4f, %10.4f)\n",
 			x1,y1,x2,y2);
 		fprintf(swfInfo->logFile,
-			"Setting line color %3d, %3d, %3d\n",
+			"SWF_Line Setting line color %3d, %3d, %3d\n",
 			R_RED(plotParams->col), 
 			R_GREEN(plotParams->col), 
 			R_BLUE(plotParams->col));
 		fprintf(swfInfo->logFile,
-			"Setting line weight %f\n",
+			"SWF_Line Setting line weight %f\n",
 			plotParams->lwd );
 	}
 	
-	SWFShape line;
-	line = newSWFShape();
-	SWFDisplayItem line_display_item;
-	
-	SWFShape_movePenTo(line, x1, y1);
+	SWFShape_movePenTo(swfInfo->line, x1, y1);
 	
 	//honor the other line styles here such as 
 	// lty, lend, ljoin, ...
-	SWFShape_setLine2(line,
+	/*SWFShape_setLine2(line,
 		(unsigned short) plotParams->lwd,
 		R_RED(plotParams->col), 
 		R_GREEN(plotParams->col), 
@@ -567,10 +579,17 @@ static void SWF_Line( double x1, double y1,
 		SWF_LINESTYLE_JOIN_ROUND |
 		SWF_LINESTYLE_FLAG_HINTING,
 		plotParams->lmitre);
+	*/
+	SWFShape_setLine(swfInfo->line, 1, 0x00, 0x00, 0x00, 0xff);
+		
+	SWFShape_drawLine(swfInfo->line, x2, y2);
 	
-	SWFShape_drawLine(line, x2, y2);
-	
-	SWFMovie_add(swfInfo->movie, (SWFBlock) line);
+    SWFShape_drawLine(swfInfo->line, 100.0, 0.0);
+    SWFShape_drawLine(swfInfo->line, 0.0, 100.0);
+    SWFShape_drawLine(swfInfo->line, -100.0, 0.0);
+    SWFShape_drawLine(swfInfo->line, 0.0, -100.0);
+
+	SWFMovie_add(swfInfo->movie, (SWFBlock) swfInfo->line);
 	
 }
 		
@@ -582,7 +601,7 @@ static void SWF_Circle( double x, double y, double r,
 	
 	if( swfInfo->debug == TRUE )
 		fprintf(swfInfo->logFile,
-			"Drawing Circle at x = %f, y = %f, r = %f\n",
+			"SWF_Circle Drawing Circle at x = %f, y = %f, r = %f\n",
 			x,y,r);
 	
 	SWFShape circle;
