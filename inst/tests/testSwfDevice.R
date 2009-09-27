@@ -2,5 +2,5 @@
 
 require(swfDevice)
 swf(bg='orange')
-plot(1,type='l',col='red')
+plot(1,col='red')
 dev.off()

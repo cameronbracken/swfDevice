@@ -184,7 +184,6 @@ static Rboolean SWF_Setup(
 	/*Initilize the SWF movie*/
 	Ming_init();
 	swfInfo->movie = newSWFMovieWithVersion(8);
-	swfInfo->line = newSWFShape();
 
 	/* Incorporate swfInfo into deviceInfo. */
 	deviceInfo->deviceSpecific = (void *) swfInfo;
@@ -426,7 +425,7 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 		fprintf(swfInfo->logFile,
 			"SWF_Open Begin swf output\n");	
 		fprintf(swfInfo->logFile,
-			"SWF_Open Setting dimensions %10.4f by %10.4f\n",
+			"SWF_Open Setting dimensions %6.1f by %6.1f\n",
 			deviceInfo->right, deviceInfo->top);	
 		fprintf(swfInfo->logFile,
 			"SWF_Open Setting background %3d, %3d, %3d\n",
@@ -448,6 +447,13 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 
 	// Set the total number of frames in the movie to 120
 	SWFMovie_setNumberOfFrames(swfInfo->movie, 1);
+	
+	SWFShape square_definition = newSWFShape();
+    SWFShape_setLine(square_definition, 1, 0x00, 0x00, 0x00, 0xff);
+	SWFShape_drawLine(square_definition, 100.0, 100.0);
+
+    // Add the square to the movie (at 0,0)
+    SWFMovie_add(swfInfo->movie, (SWFBlock) square_definition);
 
 	return TRUE;
 
@@ -465,17 +471,14 @@ static void SWF_Close( pDevDesc deviceInfo){
 		fclose(swfInfo->logFile);
 	}
 	
-	SWFShape square_definition;
-   
-    square_definition = newSWFShape();
-    SWFShape_setLine(square_definition, 1, 0x00, 0x00, 0x00, 0xff);
-    SWFShape_drawLine(square_definition, 100.0, 0.0);
-    SWFShape_drawLine(square_definition, 0.0, 100.0);
-    SWFShape_drawLine(square_definition, -100.0, 0.0);
-    SWFShape_drawLine(square_definition, 0.0, -100.0);
+	SWFMovie_setNumberOfFrames(swfInfo->movie, 1);
+	
+	SWFShape square_definition = newSWFShape();
+    SWFShape_setLine(square_definition, 1, 0xff, 0xff, 0xff, 0xff);
+	SWFShape_drawLine(square_definition, 50.0, 50.0);
 
     // Add the square to the movie (at 0,0)
-	SWFMovie_add(swfInfo->movie, (SWFBlock) square_definition);
+    SWFMovie_add(swfInfo->movie, (SWFBlock) square_definition);
 	
 	// Set the desired compression level for the output (9 = maximum compression)
 	Ming_setSWFCompression(1);
@@ -497,6 +500,10 @@ static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
 	
 	/* Shortcut pointers to variables of interest. */
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile,
+			"SWF_Newpage: Starting new frame\n");
 	
 	/*
 	 * Add a new frame to the current movie.
@@ -525,9 +532,9 @@ static void SWF_Size( double *left, double *right,
 static void SWF_MetricInfo( int c, const pGEcontext plotParams,
 		double *ascent, double *descent, double *width, pDevDesc deviceInfo ){
 
-			ascent = 0;
-			descent = 0;			
-			width = 0;
+			*ascent = 0;
+			*descent = 0;			
+			*width = 0;
 }
 static double SWF_StrWidth( const char *str,
 		const pGEcontext plotParams, pDevDesc deviceInfo )
@@ -538,7 +545,12 @@ static double SWF_StrWidth( const char *str,
 static void SWF_Text( double x, double y, const char *str,
 		double rot, double hadj, const pGEcontext plotParams, pDevDesc deviceInfo)
 {
-			
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile,
+			"SWF_Text: Drawing Text\n");	
 			
 }
 
@@ -553,7 +565,7 @@ static void SWF_Line( double x1, double y1,
 	//If debugging, print info to log file
 	if(swfInfo->debug == TRUE){
 		fprintf(swfInfo->logFile,
-			"SWF_Line Drawing line from (%10.4f, %10.4f) to (%10.4f, %10.4f)\n",
+			"SWF_Line Drawing line from (%6.1f, %6.1f) to (%6.1f, %6.1f)\n",
 			x1,y1,x2,y2);
 		fprintf(swfInfo->logFile,
 			"SWF_Line Setting line color %3d, %3d, %3d\n",
@@ -564,8 +576,9 @@ static void SWF_Line( double x1, double y1,
 			"SWF_Line Setting line weight %f\n",
 			plotParams->lwd );
 	}
+	SWFShape line = newSWFShape();
 	
-	SWFShape_movePenTo(swfInfo->line, x1, y1);
+	//SWFShape_movePenTo(line, x1, y1);
 	
 	//honor the other line styles here such as 
 	// lty, lend, ljoin, ...
@@ -580,16 +593,11 @@ static void SWF_Line( double x1, double y1,
 		SWF_LINESTYLE_FLAG_HINTING,
 		plotParams->lmitre);
 	*/
-	SWFShape_setLine(swfInfo->line, 1, 0x00, 0x00, 0x00, 0xff);
+	SWFShape_setLine(line, 2, 0x00, 0x00, 0x00, 0xff);
 		
-	SWFShape_drawLine(swfInfo->line, x2, y2);
-	
-    SWFShape_drawLine(swfInfo->line, 100.0, 0.0);
-    SWFShape_drawLine(swfInfo->line, 0.0, 100.0);
-    SWFShape_drawLine(swfInfo->line, -100.0, 0.0);
-    SWFShape_drawLine(swfInfo->line, 0.0, -100.0);
+	SWFShape_drawLine(line, x2, y2);
 
-	SWFMovie_add(swfInfo->movie, (SWFBlock) swfInfo->line);
+	SWFMovie_add(swfInfo->movie, (SWFBlock) line);
 	
 }
 		
@@ -616,7 +624,16 @@ static void SWF_Circle( double x, double y, double r,
 }
 		
 static void SWF_Rectangle( double x0, double y0, 
-		double x1, double y1, const pGEcontext plotParams, pDevDesc deviceInfo ){}
+		double x1, double y1, const pGEcontext plotParams, pDevDesc deviceInfo ){
+
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile,
+			"SWF_Rectangle: Drawing Rectangle\n");
+			
+}
 		
 static void SWF_Polyline( int n, double *x, double *y,
 		pGEcontext plotParams, pDevDesc deviceInfo )
@@ -624,6 +641,10 @@ static void SWF_Polyline( int n, double *x, double *y,
 	
 	/* Shortcut pointers to variables of interest. */
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;	
+	
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile,
+			"SWF_Rectangle: Drawing Polyline\n");
 	
 	SWFShape line;
 	line = newSWFShape();
@@ -649,12 +670,21 @@ static void SWF_Polyline( int n, double *x, double *y,
 		SWFShape_drawLine(line, x[i], y[i]);	
 	}
 	
-	SWFMovie_add(swfInfo->movie, (SWFBlock) line);
+	//SWFMovie_add(swfInfo->movie, (SWFBlock) line);
 
 }
 		
 static void SWF_Polygon( int n, double *x, double *y,
-		pGEcontext plotParams, pDevDesc deviceInfo ){}
+		pGEcontext plotParams, pDevDesc deviceInfo ){
+
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile,
+			"SWF_Rectangle: Drawing Polygon\n");			
+			
+}
 
 /* 
  * Activate and deactivate execute commands when the active R device is 
