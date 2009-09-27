@@ -13,7 +13,7 @@ typedef struct swfDevDesc{
 	FILE *logFile;
 	char outFileName[128];
 	Rboolean debug;
-	SWFMovie movie;
+	SWFMovie m;
 	int nFrames;
 } swfDevDesc;
 

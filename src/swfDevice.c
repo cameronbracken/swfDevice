@@ -183,7 +183,7 @@ static Rboolean SWF_Setup(
 	swfInfo->nFrames = 1;
 	/*Initilize the SWF movie*/
 	Ming_init();
-	swfInfo->movie = newSWFMovieWithVersion(8);
+	swfInfo->m = newSWFMovieWithVersion(8);
 
 	/* Incorporate swfInfo into deviceInfo. */
 	deviceInfo->deviceSpecific = (void *) swfInfo;
@@ -435,25 +435,25 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 	}
 
 	// Set the background color for the movie
-	SWFMovie_setBackground(swfInfo->movie, 
+	SWFMovie_setBackground(swfInfo->m, 
 		R_RED(deviceInfo->startfill), 
 		R_GREEN(deviceInfo->startfill), 
 		R_BLUE(deviceInfo->startfill));
 		
-	SWFMovie_setDimension(swfInfo->movie, deviceInfo->right, deviceInfo->top);
+	SWFMovie_setDimension(swfInfo->m, deviceInfo->right, deviceInfo->top);
 
 	// Set the frame rate for the movie to 12 frames per second
-	SWFMovie_setRate(swfInfo->movie, 2.0);
+	SWFMovie_setRate(swfInfo->m, 2.0);
 
 	// Set the total number of frames in the movie to 120
-	SWFMovie_setNumberOfFrames(swfInfo->movie, 1);
+	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
 	
 	SWFShape square_definition = newSWFShape();
     SWFShape_setLine(square_definition, 1, 0x00, 0x00, 0x00, 0xff);
 	SWFShape_drawLine(square_definition, 100.0, 100.0);
 
     // Add the square to the movie (at 0,0)
-    SWFMovie_add(swfInfo->movie, (SWFBlock) square_definition);
+    SWFMovie_add(swfInfo->m, (SWFBlock) square_definition);
 
 	return TRUE;
 
@@ -471,20 +471,20 @@ static void SWF_Close( pDevDesc deviceInfo){
 		fclose(swfInfo->logFile);
 	}
 	
-	SWFMovie_setNumberOfFrames(swfInfo->movie, 1);
+	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
 	
 	SWFShape square_definition = newSWFShape();
-    SWFShape_setLine(square_definition, 1, 0xff, 0xff, 0xff, 0xff);
+    SWFShape_setLine(square_definition, 1, 0x00, 0x00, 0x00, 0xff);
 	SWFShape_drawLine(square_definition, 50.0, 50.0);
 
     // Add the square to the movie (at 0,0)
-    SWFMovie_add(swfInfo->movie, (SWFBlock) square_definition);
+    SWFMovie_add(swfInfo->m, (SWFBlock) square_definition);
 	
 	// Set the desired compression level for the output (9 = maximum compression)
 	Ming_setSWFCompression(1);
 	
 	// Save the swf movie file to disk
-    SWFMovie_save(swfInfo->movie, swfInfo->outFileName);
+    SWFMovie_save(swfInfo->m, swfInfo->outFileName);
 
 	/* Destroy the swfInfo structure. */
 	free(swfInfo);
@@ -510,7 +510,7 @@ static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
 	 * This function adds a new frame to the current movie. All items added, removed
 	 * manipulated effect this frame and probably following frames.
 	 */
-	SWFMovie_nextFrame( swfInfo->movie );
+	//SWFMovie_nextFrame( swfInfo->m );
 	swfInfo->nFrames++;
 	
 }
@@ -578,11 +578,11 @@ static void SWF_Line( double x1, double y1,
 	}
 	SWFShape line = newSWFShape();
 	
-	//SWFShape_movePenTo(line, x1, y1);
+	SWFShape_movePenTo(line, x1, y1);
 	
 	//honor the other line styles here such as 
 	// lty, lend, ljoin, ...
-	/*SWFShape_setLine2(line,
+	SWFShape_setLine2(line,
 		(unsigned short) plotParams->lwd,
 		R_RED(plotParams->col), 
 		R_GREEN(plotParams->col), 
@@ -592,12 +592,12 @@ static void SWF_Line( double x1, double y1,
 		SWF_LINESTYLE_JOIN_ROUND |
 		SWF_LINESTYLE_FLAG_HINTING,
 		plotParams->lmitre);
-	*/
-	SWFShape_setLine(line, 2, 0x00, 0x00, 0x00, 0xff);
+	
+	//SWFShape_setLine(line, 2, 0x00, 0x00, 0x00, 0xff);
 		
-	SWFShape_drawLine(line, x2, y2);
+	SWFShape_drawLineTo(line, x2, y2);
 
-	SWFMovie_add(swfInfo->movie, (SWFBlock) line);
+	SWFMovie_add(swfInfo->m, (SWFBlock) line);
 	
 }
 		
@@ -617,9 +617,11 @@ static void SWF_Circle( double x, double y, double r,
 	
 	SWFShape_movePenTo(circle, x, y);
 	
+	SWFShape_setLine(circle, 1, 0x00, 0x00, 0x00, 0xff);
+	
 	SWFShape_drawCircle(circle, r);
 	
-	SWFMovie_add(swfInfo->movie, (SWFBlock) circle);
+	SWFMovie_add(swfInfo->m, (SWFBlock) circle);
 			
 }
 		
@@ -667,10 +669,10 @@ static void SWF_Polyline( int n, double *x, double *y,
 	/* Print coordinates for the middle segments of the line. */
 	int i;
 	for ( i = 1; i < n; i++ ){
-		SWFShape_drawLine(line, x[i], y[i]);	
+		SWFShape_drawLineTo(line, x[i], y[i]);	
 	}
 	
-	//SWFMovie_add(swfInfo->movie, (SWFBlock) line);
+	//SWFMovie_add(swfInfo->m, (SWFBlock) line);
 
 }
 		
