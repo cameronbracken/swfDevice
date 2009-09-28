@@ -180,7 +180,7 @@ static Rboolean SWF_Setup(
 	/* Copy SWF-specific information to the swfInfo variable. */
 	strcpy( swfInfo->outFileName, fileName);
 	swfInfo->debug = DEBUG;
-	swfInfo->nFrames = 1;
+	swfInfo->nFrames = 0;
 	/*Initilize the SWF movie*/
 	Ming_init();
 	swfInfo->m = newSWFMovieWithVersion(8);
@@ -359,54 +359,6 @@ double dim2dev( double length ){
 	return length*72;
 }
 
-void firstTry(void)
-{
-        // Create local variables
-        SWFFillStyle fill_style;
-        SWFShape square_definition;
-        SWFDisplayItem square_display_item;
-        SWFMovie test_movie;
-
-
-        // Initialise the movie structure in memory
-        Ming_init();
-        test_movie = newSWFMovieWithVersion(7);
-
-        // Set the background color for the movie
-        SWFMovie_setBackground(test_movie, 0x00, 0x00, 0x00);
-
-        // Set the frame rate for the movie to 12 frames per second
-        SWFMovie_setRate(test_movie, 12.0);
-
-        // Set the total number of frames in the movie to 120
-        SWFMovie_setNumberOfFrames(test_movie, 1);
-
-        // Create a new fill style (semi-transparent)
-        fill_style = newSWFSolidFillStyle(0xa5, 0xa5, 0xff, 0x80);
-        
-        // Create a square
-        square_definition = newSWFShape();
-        SWFShape_setRightFillStyle(square_definition, fill_style);
-        SWFShape_drawLine(square_definition, 100.0, 0.0);
-        SWFShape_drawLine(square_definition, 0.0, 100.0);
-        SWFShape_drawLine(square_definition, -100.0, 0.0);
-        SWFShape_drawLine(square_definition, 0.0, -100.0);
-
-        // Add the square to the movie (at 0,0)
-        square_display_item = SWFMovie_add(test_movie, (SWFBlock) square_definition);
-
-        // Move to 100, 100
-        SWFDisplayItem_moveTo(square_display_item, 100.00, 100.0);
-
-        // Set the desired compression level for the output (9 = maximum compression)
-        Ming_setSWFCompression(9);
-
-        // Save the swf movie file to disk
-        SWFMovie_save(test_movie, "ming-example.swf");
-
-		return;
-}
-
 static Rboolean SWF_Open( pDevDesc deviceInfo ){
 
 	/* 
@@ -447,13 +399,6 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 
 	// Set the total number of frames in the movie to 120
 	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
-	
-	SWFShape square_definition = newSWFShape();
-    SWFShape_setLine(square_definition, 1, 0x00, 0x00, 0x00, 0xff);
-	SWFShape_drawLine(square_definition, 100.0, 100.0);
-
-    // Add the square to the movie (at 0,0)
-    SWFMovie_add(swfInfo->m, (SWFBlock) square_definition);
 
 	return TRUE;
 
@@ -472,13 +417,6 @@ static void SWF_Close( pDevDesc deviceInfo){
 	}
 	
 	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
-	
-	SWFShape square_definition = newSWFShape();
-    SWFShape_setLine(square_definition, 1, 0x00, 0x00, 0x00, 0xff);
-	SWFShape_drawLine(square_definition, 50.0, 50.0);
-
-    // Add the square to the movie (at 0,0)
-    SWFMovie_add(swfInfo->m, (SWFBlock) square_definition);
 	
 	// Set the desired compression level for the output (9 = maximum compression)
 	Ming_setSWFCompression(1);
@@ -550,12 +488,19 @@ static void SWF_Text( double x, double y, const char *str,
 	
 	if( swfInfo->debug == TRUE )
 		fprintf(swfInfo->logFile,
-			"SWF_Text: Drawing Text\n");	
+			"SWF_Text: Writing Text\n");	
 			
 }
 
 
-/* SWF_line draws a line between the two points given. */
+
+    /*
+     * device_Line should have the side-effect that a single
+     * line is drawn (from x1,y1 to x2,y2)
+     *
+     * R_GE_gcontext parameters that should be honoured (if possible):
+     *   col, gamma, lty, lwd
+     */
 static void SWF_Line( double x1, double y1,
 		double x2, double y2, const pGEcontext plotParams, pDevDesc deviceInfo )
 {
@@ -567,7 +512,7 @@ static void SWF_Line( double x1, double y1,
 		fprintf(swfInfo->logFile,
 			"SWF_Line Drawing line from (%6.1f, %6.1f) to (%6.1f, %6.1f)\n",
 			x1,y1,x2,y2);
-		fprintf(swfInfo->logFile,
+		/*fprintf(swfInfo->logFile,
 			"SWF_Line Setting line color %3d, %3d, %3d\n",
 			R_RED(plotParams->col), 
 			R_GREEN(plotParams->col), 
@@ -575,32 +520,36 @@ static void SWF_Line( double x1, double y1,
 		fprintf(swfInfo->logFile,
 			"SWF_Line Setting line weight %f\n",
 			plotParams->lwd );
+		*/
 	}
 	SWFShape line = newSWFShape();
 	
 	SWFShape_movePenTo(line, x1, y1);
 	
-	//honor the other line styles here such as 
-	// lty, lend, ljoin, ...
-	SWFShape_setLine2(line,
-		(unsigned short) plotParams->lwd,
-		R_RED(plotParams->col), 
-		R_GREEN(plotParams->col), 
-		R_BLUE(plotParams->col),
-		R_ALPHA(plotParams->col),
-		SWF_LINESTYLE_CAP_SQUARE |
-		SWF_LINESTYLE_JOIN_ROUND |
-		SWF_LINESTYLE_FLAG_HINTING,
-		plotParams->lmitre);
-	
-	//SWFShape_setLine(line, 2, 0x00, 0x00, 0x00, 0xff);
+	SetLineStyle(line, plotParams);
 		
 	SWFShape_drawLineTo(line, x2, y2);
 
 	SWFMovie_add(swfInfo->m, (SWFBlock) line);
 	
 }
-		
+
+    /*
+     * device_Circle should have the side-effect that a
+     * circle is drawn, centred at the given location, with
+     * the given radius.
+     * (If the device has non-square pixels, 'radius' should
+     * be interpreted in the units of the x direction.)
+     * The border of the circle should be
+     * drawn in the given "col", and the circle should be
+     * filled with the given "fill" colour.
+     * If "col" is NA_INTEGER then no border should be drawn
+     * If "fill" is NA_INTEGER then the circle should not
+     * be filled.
+     *
+     * R_GE_gcontext parameters that should be honoured (if possible):
+     *   col, fill, gamma, lty, lwd
+     */	
 static void SWF_Circle( double x, double y, double r,
 		const pGEcontext plotParams, pDevDesc deviceInfo ){
 	
@@ -616,8 +565,11 @@ static void SWF_Circle( double x, double y, double r,
 	circle = newSWFShape();
 	
 	SWFShape_movePenTo(circle, x, y);
-	
-	SWFShape_setLine(circle, 1, 0x00, 0x00, 0x00, 0xff);
+
+	SetLineStyle( circle,  plotParams);
+	// Disabled currently, this is causing the whole canvas to be white
+	//if( plotParams->fill != NA_INTEGER )
+	//	SetFill( circle,  plotParams);
 	
 	SWFShape_drawCircle(circle, r);
 	
@@ -625,6 +577,16 @@ static void SWF_Circle( double x, double y, double r,
 			
 }
 		
+	/*
+     * device_Rect should have the side-effect that a
+     * rectangle is drawn with the given locations for its
+     * opposite corners.  The border of the rectangle
+     * should be in the given "col" colour and the rectangle
+     * should be filled with the given "fill" colour.
+     * If "col" is NA_INTEGER then no border should be drawn
+     * If "fill" is NA_INTEGER then the rectangle should not
+     * be filled.
+     */
 static void SWF_Rectangle( double x0, double y0, 
 		double x1, double y1, const pGEcontext plotParams, pDevDesc deviceInfo ){
 
@@ -635,8 +597,35 @@ static void SWF_Rectangle( double x0, double y0,
 		fprintf(swfInfo->logFile,
 			"SWF_Rectangle: Drawing Rectangle\n");
 			
+	SWFShape rectangle;
+	rectangle = newSWFShape();
+
+	SetLineStyle(rectangle, plotParams);
+	
+	if( plotParams->fill != NA_INTEGER )
+		SetFill(rectangle, plotParams);	
+
+	/* Start the pen at the first point */
+	SWFShape_movePenTo(rectangle, x0, y0);
+
+	/* Draw the four line segments on the rectangle */
+	SWFShape_drawLineTo(rectangle, x0, y1);
+	SWFShape_drawLineTo(rectangle, x1, y1);
+	SWFShape_drawLineTo(rectangle, x0, y1);
+	SWFShape_drawLineTo(rectangle, x0, y0);	
+
+	SWFMovie_add(swfInfo->m, (SWFBlock) rectangle);
+			
 }
 		
+	/*
+     * device_Polyline should have the side-effect that a
+     * series of line segments are drawn using the given x
+     * and y values.
+     *
+     * R_GE_gcontext parameters that should be honoured (if possible):
+     *   col, gamma, lty, lwd
+     */
 static void SWF_Polyline( int n, double *x, double *y,
 		pGEcontext plotParams, pDevDesc deviceInfo )
 {
@@ -651,20 +640,10 @@ static void SWF_Polyline( int n, double *x, double *y,
 	SWFShape line;
 	line = newSWFShape();
 
+	SetLineStyle(line, plotParams);
+	
+	/* Start the pen at the first point */
 	SWFShape_movePenTo(line, x[0], y[0]);
-
-	//honor the other line styles here such as 
-	// lty, lend, ljoin, ...
-	SWFShape_setLine2(line,
-		plotParams->lwd,
-		R_RED(plotParams->col), 
-		R_GREEN(plotParams->col), 
-		R_BLUE(plotParams->col),
-		R_TRANSPARENT(plotParams->col),
-		SWF_LINESTYLE_CAP_SQUARE |
-		SWF_LINESTYLE_JOIN_ROUND |
-		SWF_LINESTYLE_FLAG_HINTING,
-		plotParams->lmitre);
 	
 	/* Print coordinates for the middle segments of the line. */
 	int i;
@@ -672,10 +651,21 @@ static void SWF_Polyline( int n, double *x, double *y,
 		SWFShape_drawLineTo(line, x[i], y[i]);	
 	}
 	
-	//SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	SWFMovie_add(swfInfo->m, (SWFBlock) line);
 
 }
-		
+	
+	/*
+     * device_Polygon should have the side-effect that a
+     * polygon is drawn using the given x and y values
+     * the polygon border should be drawn in the "col"
+     * colour and filled with the "fill" colour.
+     * If "col" is NA_INTEGER don't draw the border
+     * If "fill" is NA_INTEGER don't fill the polygon
+     *
+     * R_GE_gcontext parameters that should be honoured (if possible):
+     *   col, fill, gamma, lty, lwd
+     */	
 static void SWF_Polygon( int n, double *x, double *y,
 		pGEcontext plotParams, pDevDesc deviceInfo ){
 
@@ -684,8 +674,53 @@ static void SWF_Polygon( int n, double *x, double *y,
 	
 	if( swfInfo->debug == TRUE )
 		fprintf(swfInfo->logFile,
-			"SWF_Rectangle: Drawing Polygon\n");			
+			"SWF_Polygin: Drawing Polygon\n");	
 			
+	SWFShape line;
+	line = newSWFShape();
+
+	SetLineStyle(line, plotParams);
+	//SetFill(line, plotParams);
+
+	/* Start the pen at the first point */
+	SWFShape_movePenTo(line, x[0], y[0]);
+
+	/* Print coordinates for the middle segments of the line. */
+	int i;
+	for ( i = 1; i < n; i++ ){
+		SWFShape_drawLineTo(line, x[i], y[i]);	
+	}
+
+	SWFMovie_add(swfInfo->m, (SWFBlock) line);
+			
+}
+
+static void SetLineStyle(SWFShape shape, const pGEcontext plotParams ){
+	
+	//FIXME: Honor all the line parameters such as 
+	//lty, lend, ljoin 
+	SWFShape_setLine2(shape,
+		(unsigned short) plotParams->lwd,
+		R_RED(plotParams->col), 
+		R_GREEN(plotParams->col), 
+		R_BLUE(plotParams->col),
+		R_ALPHA(plotParams->col),
+		SWF_LINESTYLE_CAP_ROUND
+		plotParams->lmitre);
+		
+		
+}
+
+
+static void SetFill(SWFShape shape, const pGEcontext plotParams ){
+	
+	SWFFillStyle fill_style;
+	fill_style = newSWFSolidFillStyle(
+		R_RED(plotParams->fill), 
+		R_GREEN(plotParams->fill), 
+		R_BLUE(plotParams->fill),
+		R_ALPHA(plotParams->fill));
+	SWFShape_setRightFillStyle(shape, fill_style);
 }
 
 /* 
