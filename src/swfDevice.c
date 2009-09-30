@@ -379,6 +379,7 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 			R_RED(deviceInfo->startfill), 
 			R_GREEN(deviceInfo->startfill), 
 			R_BLUE(deviceInfo->startfill));
+		
 	}
 
 	// Set the background color for the movie
@@ -518,7 +519,7 @@ static void SWF_Line( double x1, double y1,
 	
 	SWFShape_movePenTo(line, x1, y1);
 	
-	SetLineStyle(line, plotParams);
+	SetLineStyle(line, plotParams, swfInfo);
 		
 	SWFShape_drawLineTo(line, x2, y2);
 
@@ -558,10 +559,10 @@ static void SWF_Circle( double x, double y, double r,
 	
 	SWFShape_movePenTo(circle, x, y);
 
-	SetLineStyle( circle,  plotParams);
+	SetLineStyle( circle,  plotParams, swfInfo);
 	// Disabled currently, this is causing the whole canvas to be white
-	//if( plotParams->fill != NA_INTEGER )
-		//SetFill( circle,  plotParams);
+	if( plotParams->fill != NA_INTEGER )
+		SetFill( circle,  plotParams, swfInfo);
 	
 	// draws a circle with radius r 
 	// centered at (x,y) into shape circle
@@ -613,10 +614,10 @@ static void SWF_Rectangle( double x0, double y0,
 	SWFShape rectangle;
 	rectangle = newSWFShape();
 
-	SetLineStyle(rectangle, plotParams);
+	SetLineStyle(rectangle, plotParams, swfInfo);
 	
 	if( plotParams->fill != NA_INTEGER )
-		SetFill(rectangle, plotParams);	
+		SetFill(rectangle, plotParams, swfInfo);	
 
 	/* Start the pen at the first point */
 	SWFShape_movePenTo(rectangle, x0, y0);
@@ -653,7 +654,7 @@ static void SWF_Polyline( int n, double *x, double *y,
 	SWFShape line;
 	line = newSWFShape();
 
-	SetLineStyle(line, plotParams);
+	SetLineStyle(line, plotParams, swfInfo);
 	
 	/* Start the pen at the first point */
 	SWFShape_movePenTo(line, x[0], y[0]);
@@ -692,8 +693,9 @@ static void SWF_Polygon( int n, double *x, double *y,
 	SWFShape line;
 	line = newSWFShape();
 
-	SetLineStyle(line, plotParams);
-	//SetFill(line, plotParams);
+	SetLineStyle(line, plotParams, swfInfo);
+	if( plotParams->fill != NA_INTEGER )
+		SetFill(line, plotParams, swfInfo);
 
 	/* Start the pen at the first point */
 	SWFShape_movePenTo(line, x[0], y[0]);
@@ -708,7 +710,17 @@ static void SWF_Polygon( int n, double *x, double *y,
 			
 }
 
-static void SetLineStyle(SWFShape shape, const pGEcontext plotParams ){
+static void SetLineStyle(SWFShape shape, const pGEcontext plotParams, 
+	swfDevDesc *swfInfo ){
+	
+	unsigned int red = R_RED(plotParams->fill);
+	unsigned int green = R_GREEN(plotParams->fill);
+	unsigned int blue = R_BLUE(plotParams->fill);
+	unsigned int alpha =  R_ALPHA(plotParams->fill);
+	fprintf(swfInfo->logFile,"LineStyle: Red=%d, ",red);
+	fprintf(swfInfo->logFile,"Green=%d, ",green);
+	fprintf(swfInfo->logFile,"Blue=%d, ",blue);
+	fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
 	
 	//FIXME: Honor all the line parameters such as 
 	//lty, lend, ljoin 
@@ -725,13 +737,18 @@ static void SetLineStyle(SWFShape shape, const pGEcontext plotParams ){
 }
 
 
-static void SetFill(SWFShape shape, const pGEcontext plotParams ){
+static void SetFill(SWFShape shape, const pGEcontext plotParams, 
+	swfDevDesc *swfInfo  ){
 	
 	SWFFillStyle fill_style;
-	byte red = R_RED(plotParams->fill);
-	byte green = R_GREEN(plotParams->fill);
-	byte blue = R_BLUE(plotParams->fill);
-	byte alpha = R_ALPHA(plotParams->fill);
+	unsigned int red = R_RED(plotParams->fill);
+	unsigned int green = R_GREEN(plotParams->fill);
+	unsigned int blue = R_BLUE(plotParams->fill);
+	unsigned int alpha = R_ALPHA(plotParams->fill);
+	fprintf(swfInfo->logFile,"Fill: Red=%d, ",red);
+	fprintf(swfInfo->logFile,"Green=%d, ",green);
+	fprintf(swfInfo->logFile,"Blue=%d, ",blue);
+	fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
 	
 	fill_style = newSWFSolidFillStyle( red, green, blue, alpha );
 	SWFShape_setLeftFillStyle(shape, fill_style);
