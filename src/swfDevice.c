@@ -30,6 +30,8 @@
 
 #include "swfDevice.h"
 #define DEBUG TRUE
+#define BUFSIZE 512
+
 
 SEXP swfDevice ( SEXP args ){
 
@@ -77,6 +79,8 @@ SEXP swfDevice ( SEXP args ){
 	/* Recover initial background and foreground colors. */
 	bg = CHAR(asChar(CAR(args))); args = CDR(args);
 	fg = CHAR(asChar(CAR(args))); args = CDR(args);
+	
+	
 
 	/* Ensure there is an empty slot avaliable for a new device. */
 	R_CheckDeviceAvailable();
@@ -231,7 +235,7 @@ static Rboolean SWF_Setup(
 	 * output file by not printing objects that fall outside the plot 
 	 * boundaries. 
 	*/
-	deviceInfo->canClip = FALSE;
+	deviceInfo->canClip = TRUE;
 
 	/*
 	 * These next parameters speficy if the device reacts to keyboard and 
@@ -350,15 +354,6 @@ static Rboolean SWF_Setup(
 
 }
 
-/*
- * This function is responsible for converting lengths given in page
- * dimensions (ie. inches, cm, etc.) to device dimensions (currenty
- * points- 1/72 of an inch). 
-*/
-double dim2dev( double length ){
-	return length*72;
-}
-
 static Rboolean SWF_Open( pDevDesc deviceInfo ){
 
 	/* 
@@ -428,9 +423,6 @@ static void SWF_Close( pDevDesc deviceInfo){
 	free(swfInfo);
 
 }
-
-
-
 
 
 /* Utility routines. */
@@ -569,9 +561,30 @@ static void SWF_Circle( double x, double y, double r,
 	SetLineStyle( circle,  plotParams);
 	// Disabled currently, this is causing the whole canvas to be white
 	//if( plotParams->fill != NA_INTEGER )
-	//	SetFill( circle,  plotParams);
+		//SetFill( circle,  plotParams);
 	
-	SWFShape_drawCircle(circle, r);
+	// draws a circle with radius r 
+	// centered at (x,y) into shape circle
+
+	double a = r * 0.414213562; 
+	// = tan(22.5 deg)
+
+	double b = r * 0.707106781; 
+	// = sqrt(2)/2 = sin(45 deg)
+
+	SWFShape_movePenTo(circle, x + r, y);
+
+	SWFShape_drawCurveTo(circle, x+r, y-a, x+b, y-b); 
+	SWFShape_drawCurveTo(circle, x+a, y-r, x  , y-r); 
+	SWFShape_drawCurveTo(circle, x-a, y-r, x-b, y-b); 
+	SWFShape_drawCurveTo(circle, x-r, y-a, x-r, y  ); 
+	SWFShape_drawCurveTo(circle, x-r, y+a, x-b, y+b); 
+	SWFShape_drawCurveTo(circle, x-a, y+r, x  , y+r); 
+	SWFShape_drawCurveTo(circle, x+a, y+r, x+b, y+b); 
+	SWFShape_drawCurveTo(circle, x+r, y+a, x+r, y  );
+	
+	// I would like to use this function but the circles drawn with it are funky
+	//SWFShape_drawCircle(circle, r);
 	
 	SWFMovie_add(swfInfo->m, (SWFBlock) circle);
 			
@@ -705,7 +718,7 @@ static void SetLineStyle(SWFShape shape, const pGEcontext plotParams ){
 		R_GREEN(plotParams->col), 
 		R_BLUE(plotParams->col),
 		R_ALPHA(plotParams->col),
-		SWF_LINESTYLE_CAP_ROUND
+		SWF_LINESTYLE_CAP_ROUND,
 		plotParams->lmitre);
 		
 		
@@ -715,12 +728,58 @@ static void SetLineStyle(SWFShape shape, const pGEcontext plotParams ){
 static void SetFill(SWFShape shape, const pGEcontext plotParams ){
 	
 	SWFFillStyle fill_style;
-	fill_style = newSWFSolidFillStyle(
-		R_RED(plotParams->fill), 
-		R_GREEN(plotParams->fill), 
-		R_BLUE(plotParams->fill),
-		R_ALPHA(plotParams->fill));
-	SWFShape_setRightFillStyle(shape, fill_style);
+	byte red = R_RED(plotParams->fill);
+	byte green = R_GREEN(plotParams->fill);
+	byte blue = R_BLUE(plotParams->fill);
+	byte alpha = R_ALPHA(plotParams->fill);
+	
+	fill_style = newSWFSolidFillStyle( red, green, blue, alpha );
+	SWFShape_setLeftFillStyle(shape, fill_style);
+}
+
+/*static void FontSetup(){
+	
+	char *fonts[10] = {
+	"Bitstream Vera Serif.fdb",
+	"Bitstream Vera Serif-B.fdb",
+	"Bitstream Vera Sans.fdb",
+	"Bitstream Vera Sans-B.fdb",
+	"Bitstream Vera Sans-I.fdb"
+	"Bitstream Vera Sans-B-I.fdb",
+	"Bitstream Vera Sans Mono.fdb",
+	"Bitstream Vera Sans Mono-B.fdb",
+	"Bitstream Vera Sans Mono-I.fdb",
+	"Bitstream Vera Sans Mono-B-I.fdb"
+	};
+
+	int i;
+
+	for(i = 0; i < 11; i++){
+		char *tmp = fonts[i];
+		sprintf(fonts[i], BUFSIZE,
+			"%s%slibrary%sswfDevice%sinst%sfonts%sming-fonts-1.00%sfdb%s%s",
+			R_Home, FILESEP, FILESEP, FILESEP, FILESEP, FILESEP, FILESEP, 
+			FILESEP, tmp);
+		//myFont = newSWFFont_fromFile( fdbName );
+	}
+	
+};*/
+
+/*
+ * This function is responsible for converting lengths given in page
+ * dimensions (ie. inches, cm, etc.) to device dimensions (currenty
+ * points- 1/72 of an inch).
+ * With an swf file this doesn't really matter, because the size is 
+ * ultimately set when the file is embedded in html.  
+*/
+double dim2dev( double length ){
+	return length*72;
+}
+
+static void SWFLoadFont(){
+	
+	
+	
 }
 
 /* 

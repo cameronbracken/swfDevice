@@ -12,7 +12,7 @@ fi
 AC_MSG_CHECKING([whether ming is installed])
 if test `${MING_CONFIG} --version`;
 then
-	AC_MSG_RESULT([yes])
+	AC_MSG_RESULT([yes!])
 	PKG_CPPFLAGS=`${MING_CONFIG} --cflags`
 	PKG_LIBS=`${MING_CONFIG} --libs`
 
@@ -41,7 +41,7 @@ VER2=`echo "$MING_VERSION" | cut -d"." -f2`
 REQ2_MING="4"
 VER3=`echo "$MING_VERSION" | cut -d"." -f3`
 REQ3_MING="2"
-echo "libming version $MING_VERSION found."
+echo "Found libming version $MING_VERSION."
 if test "$VER2" -lt "$REQ2_MING" ; then
     echo "For building this version, at least libming version 0.4.2 is required."
     exit 1
