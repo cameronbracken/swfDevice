@@ -726,10 +726,10 @@ static void SetLineStyle(SWFShape shape, const pGEcontext plotParams,
 	//lty, lend, ljoin 
 	SWFShape_setLine2(shape,
 		(unsigned short) plotParams->lwd,
-		R_RED(plotParams->col), 
-		R_GREEN(plotParams->col), 
-		R_BLUE(plotParams->col),
-		R_ALPHA(plotParams->col),
+		red, 
+		green, 
+		blue,
+		0xff,
 		SWF_LINESTYLE_CAP_ROUND,
 		plotParams->lmitre);
 		
@@ -750,7 +750,7 @@ static void SetFill(SWFShape shape, const pGEcontext plotParams,
 	fprintf(swfInfo->logFile,"Blue=%d, ",blue);
 	fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
 	
-	fill_style = newSWFSolidFillStyle( red, green, blue, alpha );
+	fill_style = newSWFSolidFillStyle( red, green, blue, 0xff );
 	SWFShape_setLeftFillStyle(shape, fill_style);
 }
 
