@@ -1,0 +1,14 @@
+Package: swfDevice
+Type: Package
+Title: R graphics device for swf (flash) output.
+Version: 0.2
+Date: 2009-09-24
+Author: Cameron Bracken
+Maintainer: Cameron Bracken <cameron.bracken@gmail.com>
+Description: A graphics device which allows for R graphics output as swf 
+        files. Utilizes the Ming library (http://www.libming.org/). Also 
+        provides limited R bindings to the Ming library. 
+License: GPL (>=2)
+SystemRequirement: libming (>=0.4.2), http://www.libming.org/, earlier version 
+        may work but have not been tested.
+LazyLoad: yes
