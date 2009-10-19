@@ -31,7 +31,8 @@ int main(void)
 		SWFShape_drawLine(line,440,0); 
 
 		square = newSWFShape(); 
-		SWFShape_setLine(square,1,0x00,0x00,0x00,0xff); 
+		SWFShape_setLine2(square,1,0x00,0x00,0x00,0xff,
+			SWF_LINESTYLE_CAP_ROUND, 1); 
 		fill_style = newSWFSolidFillStyle(0x00,0x00,0x00,0x80);
 		SWFShape_setRightFillStyle(square,fill_style); 
 		SWFShape_drawLine(square,50,0); 
