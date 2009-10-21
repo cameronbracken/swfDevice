@@ -69,7 +69,7 @@ static Rboolean SWF_Locator( double *x, double *y, pDevDesc deviceInfo );
 static void SWF_Mode( int mode, pDevDesc deviceInfo );
 
 /*Custom functions*/
-static void SetLineStyle(SWFShape shape, const pGEcontext plotParams );
-static void SetFill(SWFShape shape, const pGEcontext plotParams );
+static void SetLineStyle(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );
+static void SetFill(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );
 
 #endif // End of Once Only header

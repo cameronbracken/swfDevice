@@ -185,7 +185,7 @@ static Rboolean SWF_Setup(
 	strcpy( swfInfo->outFileName, fileName);
 	swfInfo->debug = DEBUG;
 	swfInfo->nFrames = 0;
-	/*Initilize the SWF movie*/
+	/*Initilize the SWF movie version 8 so more line styles can be used*/
 	Ming_init();
 	swfInfo->m = newSWFMovieWithVersion(8);
 
@@ -235,7 +235,7 @@ static Rboolean SWF_Setup(
 	 * output file by not printing objects that fall outside the plot 
 	 * boundaries. 
 	*/
-	deviceInfo->canClip = TRUE;
+	deviceInfo->canClip = FALSE;
 
 	/*
 	 * These next parameters speficy if the device reacts to keyboard and 
@@ -370,15 +370,16 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 			return FALSE;
 			
 		fprintf(swfInfo->logFile,
-			"SWF_Open Begin swf output\n");	
+			"SWF_Open: Begin swf output\n");	
 		fprintf(swfInfo->logFile,
-			"SWF_Open Setting dimensions %6.1f by %6.1f\n",
+			"SWF_Open: Setting dimensions %6.1f by %6.1f\n",
 			deviceInfo->right, deviceInfo->top);	
 		fprintf(swfInfo->logFile,
-			"SWF_Open Setting background %3d, %3d, %3d\n",
+			"SWF_Open: Setting background %3d, %3d, %3d\n",
 			R_RED(deviceInfo->startfill), 
 			R_GREEN(deviceInfo->startfill), 
 			R_BLUE(deviceInfo->startfill));
+		
 	}
 
 	// Set the background color for the movie
@@ -407,7 +408,7 @@ static void SWF_Close( pDevDesc deviceInfo){
 	//If there is an open deug log, close it
 	if( swfInfo->debug == TRUE ){
 		fprintf(swfInfo->logFile,
-			"SWF_Close end swf output\n");
+			"SWF_Close: end swf output\n");
 		fclose(swfInfo->logFile);
 	}
 	
@@ -418,7 +419,7 @@ static void SWF_Close( pDevDesc deviceInfo){
     SWFMovie_save(swfInfo->m, swfInfo->outFileName);
 	
 	//Clear the movie reference 
-	destroySWFMovie(SWFMovie movie)
+	destroySWFMovie(swfInfo->m);
 	
 	/* Destroy the swfInfo structure. */
 	free(swfInfo);
@@ -503,23 +504,15 @@ static void SWF_Line( double x1, double y1,
 	//If debugging, print info to log file
 	if(swfInfo->debug == TRUE){
 		fprintf(swfInfo->logFile,
-			"SWF_Line Drawing line from (%6.1f, %6.1f) to (%6.1f, %6.1f)\n",
+			"SWF_Line: Drawing line from (%6.1f, %6.1f) to (%6.1f, %6.1f)\n",
 			x1,y1,x2,y2);
-		/*fprintf(swfInfo->logFile,
-			"SWF_Line Setting line color %3d, %3d, %3d\n",
-			R_RED(plotParams->col), 
-			R_GREEN(plotParams->col), 
-			R_BLUE(plotParams->col));
-		fprintf(swfInfo->logFile,
-			"SWF_Line Setting line weight %f\n",
-			plotParams->lwd );
-		*/
 	}
 	SWFShape line = newSWFShape();
 	
 	SWFShape_movePenTo(line, x1, y1);
 	
-	SetLineStyle(line, plotParams);
+	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
+		SetLineStyle(line, plotParams, swfInfo);
 		
 	SWFShape_drawLineTo(line, x2, y2);
 
@@ -551,7 +544,7 @@ static void SWF_Circle( double x, double y, double r,
 	
 	if( swfInfo->debug == TRUE )
 		fprintf(swfInfo->logFile,
-			"SWF_Circle Drawing Circle at x = %f, y = %f, r = %f\n",
+			"SWF_Circle: Drawing Circle at x = %f, y = %f, r = %f\n",
 			x,y,r);
 	
 	SWFShape circle;
@@ -559,10 +552,12 @@ static void SWF_Circle( double x, double y, double r,
 	
 	SWFShape_movePenTo(circle, x, y);
 
-	SetLineStyle( circle,  plotParams);
-	// Disabled currently, this is causing the whole canvas to be white
-	//if( plotParams->fill != NA_INTEGER )
-		//SetFill( circle,  plotParams);
+	// this is causing the shapes not to be drawn???
+	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
+		SetFill( circle,  plotParams, swfInfo);
+
+	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
+		SetLineStyle( circle,  plotParams, swfInfo);
 	
 	// draws a circle with radius r 
 	// centered at (x,y) into shape circle
@@ -584,10 +579,17 @@ static void SWF_Circle( double x, double y, double r,
 	SWFShape_drawCurveTo(circle, x+a, y+r, x+b, y+b); 
 	SWFShape_drawCurveTo(circle, x+r, y+a, x+r, y  );
 	
-	// I would like to use this function but the circles drawn with it are funky
+	
+	// I would like to use this function but the circles 
+	// drawn with it are funky
 	//SWFShape_drawCircle(circle, r);
 	
+
+	//SWFDisplayItem circled;
+	//circled = 
 	SWFMovie_add(swfInfo->m, (SWFBlock) circle);
+	//SWFDisplayItem_moveTo(circled,x,y);
+	
 			
 }
 		
@@ -614,10 +616,11 @@ static void SWF_Rectangle( double x0, double y0,
 	SWFShape rectangle;
 	rectangle = newSWFShape();
 
-	SetLineStyle(rectangle, plotParams);
-	
-	if( plotParams->fill != NA_INTEGER )
-		SetFill(rectangle, plotParams);	
+	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
+		SetLineStyle(rectangle, plotParams, swfInfo);
+		
+	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
+		SetFill(rectangle, plotParams, swfInfo);
 
 	/* Start the pen at the first point */
 	SWFShape_movePenTo(rectangle, x0, y0);
@@ -649,20 +652,32 @@ static void SWF_Polyline( int n, double *x, double *y,
 	
 	if( swfInfo->debug == TRUE )
 		fprintf(swfInfo->logFile,
-			"SWF_Rectangle: Drawing Polyline\n");
+			"SWF_Polyline: Drawing Polyline\n");
 	
 	SWFShape line;
 	line = newSWFShape();
-
-	SetLineStyle(line, plotParams);
+	
+	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
+		SetLineStyle(line, plotParams, swfInfo);
+		
+	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
+		SetFill(line, plotParams, swfInfo);
 	
 	/* Start the pen at the first point */
 	SWFShape_movePenTo(line, x[0], y[0]);
+	
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile,
+			"\t\t(%5.1f,%5.1f)\n",x[0], y[0]);
 	
 	/* Print coordinates for the middle segments of the line. */
 	int i;
 	for ( i = 1; i < n; i++ ){
 		SWFShape_drawLineTo(line, x[i], y[i]);	
+		
+		if( swfInfo->debug == TRUE )
+			fprintf(swfInfo->logFile,
+				"\t\t(%5.1f,%5.1f)\n", x[i], y[i]);
 	}
 	
 	SWFMovie_add(swfInfo->m, (SWFBlock) line);
@@ -688,14 +703,17 @@ static void SWF_Polygon( int n, double *x, double *y,
 	
 	if( swfInfo->debug == TRUE )
 		fprintf(swfInfo->logFile,
-			"SWF_Polygin: Drawing Polygon\n");	
+			"SWF_Polygon: Drawing Polygon\n");	
 			
 	SWFShape line;
 	line = newSWFShape();
 
-	SetLineStyle(line, plotParams);
-	//SetFill(line, plotParams);
-
+	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
+		SetLineStyle(line, plotParams, swfInfo);
+	
+	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
+		SetFill(line, plotParams, swfInfo);
+		
 	/* Start the pen at the first point */
 	SWFShape_movePenTo(line, x[0], y[0]);
 
@@ -704,38 +722,79 @@ static void SWF_Polygon( int n, double *x, double *y,
 	for ( i = 1; i < n; i++ ){
 		SWFShape_drawLineTo(line, x[i], y[i]);	
 	}
-
+		
 	SWFMovie_add(swfInfo->m, (SWFBlock) line);
 			
 }
 
-static void SetLineStyle(SWFShape shape, const pGEcontext plotParams ){
+static void SetLineStyle(SWFShape shape, const pGEcontext plotParams, 
+	swfDevDesc *swfInfo ){
+	
+	byte red = R_RED(plotParams->col);
+	byte green = R_GREEN(plotParams->col);
+	byte blue = R_BLUE(plotParams->col);
+	byte alpha =  R_ALPHA(plotParams->col);
+	fprintf(swfInfo->logFile,"\tLineStyle: Red=%d, ",red);
+	fprintf(swfInfo->logFile,"Green=%d, ",green);
+	fprintf(swfInfo->logFile,"Blue=%d, ",blue);
+	fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
 	
 	//FIXME: Honor all the line parameters such as 
 	//lty, lend, ljoin 
+	SWFShape_setLine(shape,
+		(unsigned short) plotParams->lwd,
+		red, green, blue, alpha);
+		
+	/*
 	SWFShape_setLine2(shape,
 		(unsigned short) plotParams->lwd,
-		R_RED(plotParams->col), 
-		R_GREEN(plotParams->col), 
-		R_BLUE(plotParams->col),
-		R_ALPHA(plotParams->col),
+		red, green, blue, alpha,
 		SWF_LINESTYLE_CAP_ROUND,
 		plotParams->lmitre);
+	*/
 		
 		
 }
 
 
-static void SetFill(SWFShape shape, const pGEcontext plotParams ){
+static void SetFill(SWFShape shape, const pGEcontext plotParams, 
+	swfDevDesc *swfInfo  ){
 	
-	SWFFillStyle fill_style;
+	/*
+	 *	Some Notes on Color
+	 *
+	 *	R uses a 24-bit color model.  Colors are specified in 32-bit
+	 *	integers which are partitioned into 4 bytes as follows.
+	 *
+	 *		<-- most sig	    least sig -->
+	 *		+-------------------------------+
+	 *		|   0	| blue	| green |  red	|
+	 *		+-------------------------------+
+	 *
+	 *	The red, green and blue bytes can be extracted as follows.
+	 *
+	 *		red   = ((color	     ) & 255)
+	 *		green = ((color >>  8) & 255)
+	 *		blue  = ((color >> 16) & 255)
+	 */
+	
 	byte red = R_RED(plotParams->fill);
 	byte green = R_GREEN(plotParams->fill);
 	byte blue = R_BLUE(plotParams->fill);
+	
+	//Top 8 bits: 255 = opaque, 0 = transparent
 	byte alpha = R_ALPHA(plotParams->fill);
 	
+	fprintf(swfInfo->logFile,"\tFill: Red=%d, ",red);
+	fprintf(swfInfo->logFile,"Green=%d, ",green);
+	fprintf(swfInfo->logFile,"Blue=%d, ",blue);
+	fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
+	
+	SWFFillStyle fill_style;
 	fill_style = newSWFSolidFillStyle( red, green, blue, alpha );
-	SWFShape_setLeftFillStyle(shape, fill_style);
+	if(fill_style == NULL)
+		error("Failed to allocate memory for fill object!");
+	SWFShape_setRightFillStyle(shape, fill_style);
 }
 
 /*static void FontSetup(){

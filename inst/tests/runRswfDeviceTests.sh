@@ -1,4 +1,8 @@
 #!/bin/bash
 
+OPEN=open
+
 R_ARCH=/x86_64 R CMD INSTALL --clean ../../
-R_ARCH=/x86_64 Rscript testSwfDevice.R
+R_ARCH=/x86_64 R CMD BATCH testSwfDevice.R
+
+#$OPEN *.swf
