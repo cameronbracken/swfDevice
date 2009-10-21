@@ -411,14 +411,15 @@ static void SWF_Close( pDevDesc deviceInfo){
 		fclose(swfInfo->logFile);
 	}
 	
-	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
-	
 	// Set the desired compression level for the output (9 = maximum compression)
-	Ming_setSWFCompression(1);
+	Ming_setSWFCompression(9);
 	
 	// Save the swf movie file to disk
     SWFMovie_save(swfInfo->m, swfInfo->outFileName);
-
+	
+	//Clear the movie reference 
+	destroySWFMovie(SWFMovie movie)
+	
 	/* Destroy the swfInfo structure. */
 	free(swfInfo);
 

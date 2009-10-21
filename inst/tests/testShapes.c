@@ -45,7 +45,7 @@ int main(void)
         Ming_setSWFCompression(9);
 
         // Save the swf movie file to disk
-        SWFMovie_save(test_movie, "ming-test.swf");
+        SWFMovie_save(test_movie, "ming-test-shapes.swf");
 
         return EXIT_SUCCESS;
 }
