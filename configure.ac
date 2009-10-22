@@ -1,4 +1,4 @@
-AC_INIT([swfDevice], 0.2)
+AC_INIT([swfDevice], 0.3)
 
 MING_CONFIG="ming-config"
 
