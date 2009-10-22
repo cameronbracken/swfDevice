@@ -1,16 +1,45 @@
 __swfDevice__: R graphics device for swf (flash) output
-
 __Status__: Pre-Alpha
 
 __Description__: This package provides the swf() graphics device in R.  Using Ming library (http://www.libming.org/) , this device can create flash movies from R plotting commands.  My vision for this device is that multipage output will be rendered as movies with specifiable parameters and optional buttons for control. 
 
 __System Requirements__: Depends on libming version >= 0.4.0beta5.  This version introduced support for ttf fonts without conversion.
 
-__TODO__
+__Todo__
 
-* Line types, ljoin, lmitre
-* Character metrics (this will be a nightmare)
-* Windows support 
+* Device features to address/investigate
+	- xCharOffset yCharOffset            
+	- yLineBias
+	- ipr: pixels per inch             
+	- cra: default character size in pixels
+	- gamma                  
+	- canClip: will be much harder than tikzDevice                 	
+	- canChangeGamma
+	- canHAdj: comes with text support
+	- startps: ditto        
+	- hasTextUTF8: should be possible with ming
+	- wantSymbolUTF8: ditto 
+	- useRotatedTextInContour: ditto 
+* Implement remaining graphics parameters, especially fill! 
+	- gamma
+	- lty       
+	- lend
+	- ljoin
+	- lmitre
+	- ps        
+	- lineheight
+	- fontface
+	- fontfamily
+* Graphics primitives 
+	- metricInfo     
+	- textUTF8       
+	- strWidthUTF8
+* Windows?
+
+__Lessons Learned__
+
+* SWFShape_setRightFillStyle() and SWFShape_setLine2() do not play nicely
+
 
 __Planned Features__
 
