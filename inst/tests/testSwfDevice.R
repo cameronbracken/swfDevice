@@ -35,7 +35,26 @@ tests <- list(
 		legend( x='top', title='Legend Test', legend=c('Hello, world!'), inset=0.05 )
 
 		legend( 6, 4, title='Another Legend Test', legend=c('Test 1','Test 2'), pch=c(1,16))
+		plot(1)
+		plot(1:10)
+		plot(1:10)
 
+	},
+	
+	function(main){
+		
+		suppressMessages(require(animation))
+		ani.options(interval = .001)
+		knn.ani()
+		
+	},
+	
+	function(main){
+		
+		suppressMessages(require(animation))
+		ani.options(interval = 0.001)
+		mwar.ani(lty.rect = 3, pch = 21, col = "red", bg = "yellow",type='o')
+		
 	}
 	
 )

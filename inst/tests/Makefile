@@ -13,7 +13,9 @@ examples:
 	gcc -o testText ${MING_OPTS} testText.c 
 	./testText
 	gcc -o testShapes ${MING_OPTS} testShapes.c 
-	./testShapes 
+	./testShapes
+	gcc -o testActions ${MING_OPTS} testActions.c 
+	./testActions
 
 clean:
-	rm *.swf testShapes testButtons testText
+	rm *.swf testShapes testButtons testText testShapes

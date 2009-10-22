@@ -8,10 +8,8 @@ __System Requirements__: Depends on libming version >= 0.4.0beta5.  This version
 
 __TODO__
 
-* Basically everything
-* Implement remaining graphics parameters, especially fill! 
-* Text support and character metrics (this will be a nightmare)
-* Multipage output
+* Line types, ljoin, lmitre
+* Character metrics (this will be a nightmare)
 * Windows support 
 
 __Planned Features__

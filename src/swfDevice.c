@@ -188,6 +188,8 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	/*Initilize the SWF movie version 8 so more line styles can be used*/
 	swfInfo->m = newSWFMovieWithVersion(8);
 	swfInfo->font = newSWFFont_fromFile(fontFile);
+	swfInfo->displayListHead = NULL; 
+	swfInfo->displayListTail = NULL;
 
 	/* Incorporate swfInfo into deviceInfo. */
 	deviceInfo->deviceSpecific = (void *) swfInfo;
@@ -389,10 +391,11 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 		
 	SWFMovie_setDimension(swfInfo->m, deviceInfo->right, deviceInfo->top);
 
-	// Set the frame rate for the movie to 12 frames per second
-	SWFMovie_setRate(swfInfo->m, 2.0);
-
-	// Set the total number of frames in the movie to 120
+	// Set the frame rate for the movie to 2 frames per second
+	//FIXME - pass this in as a parameter
+	SWFMovie_setRate(swfInfo->m, 12);
+	
+	// Set the total number of frames in the movie to 1
 	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
 
 	return TRUE;
@@ -408,6 +411,8 @@ static void SWF_Close( pDevDesc deviceInfo){
 	//If there is an open deug log, close it
 	if( swfInfo->debug == TRUE ){
 		fprintf(swfInfo->logFile,
+			"SWF_Close: ending movie with %d frames\n",swfInfo->nFrames);
+		fprintf(swfInfo->logFile,
 			"SWF_Close: end swf output\n");
 		fclose(swfInfo->logFile);
 	}
@@ -415,6 +420,11 @@ static void SWF_Close( pDevDesc deviceInfo){
 	// Set the desired compression level for the output (9 = maximum compression)
 	Ming_setSWFCompression(9);
 	
+	//For some reason the last frame does't get drawn unless this happens
+	// but then an extra blank frame gets entered?
+	if( swfInfo->nFrames > 1 )
+		SWFMovie_nextFrame( swfInfo->m );
+		
 	// Save the swf movie file to disk
     SWFMovie_save(swfInfo->m, swfInfo->outFileName);
 	
@@ -443,7 +453,19 @@ static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
 	 * This function adds a new frame to the current movie. All items added, removed
 	 * manipulated effect this frame and probably following frames.
 	 */
-	//SWFMovie_nextFrame( swfInfo->m );
+	if(!(swfInfo->nFrames == 0)){
+		SWFMovie_nextFrame( swfInfo->m );
+		
+		//Wipe the slate clean 
+		// nextFrame draws all the ojects and then advances the frame
+		// so remove all the objects in the display list and start over
+		while (swfInfo->displayListHead) {
+			swfInfo->displayListTail = swfInfo->displayListHead->next;
+			SWFDisplayItem_remove(swfInfo->displayListHead->d);
+			free(swfInfo->displayListHead);
+			swfInfo->displayListHead = swfInfo->displayListTail;
+		}
+	}
 	swfInfo->nFrames++;
 	
 }
@@ -479,6 +501,7 @@ static void SWF_MetricInfo( int c, const pGEcontext plotParams,
 	SWFText_setHeight(text_object, plotParams->ps * plotParams->cex);
 
 	// Add a string to the text object
+	//FIXME!!! pass real character.
 	SWFText_addString(text_object, "a", NULL);
 
 	double a = SWFText_getAscent(text_object);
@@ -493,7 +516,6 @@ static void SWF_MetricInfo( int c, const pGEcontext plotParams,
 	*ascent = a;
 	*descent = d;
 	*width = w;
-	
 	
 	destroySWFText(text_object);
 	
@@ -561,13 +583,14 @@ static void SWF_Text( double x, double y, const char *str,
 	// Add the text object to the movie (at 0,0)
 	text_display = SWFMovie_add(swfInfo->m, (SWFBlock) text_object);
 	
-	// Move to correct coordinate
+	addToDisplayList( text_display );
+	
+	// Move to correct coordinate and rotate
 	SWFDisplayItem_moveTo(text_display, x, y);
 	SWFDisplayItem_rotate(text_display, rot);
 	
 			
 }
-
 
 
     /*
@@ -601,7 +624,9 @@ static void SWF_Line( double x1, double y1,
 		
 	SWFShape_drawLineTo(line, x2, y2);
 
-	SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	SWFDisplayItem lined = SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	
+	addToDisplayList( lined );
 	
 }
 
@@ -672,10 +697,9 @@ static void SWF_Circle( double x, double y, double r,
 	//SWFShape_drawCircle(circle, r);
 	
 
-	//SWFDisplayItem circled;
-	//circled = 
-	SWFMovie_add(swfInfo->m, (SWFBlock) circle);
-	
+	SWFDisplayItem circled = SWFMovie_add(swfInfo->m, (SWFBlock) circle);
+
+	addToDisplayList( circled );
 			
 }
 		
@@ -720,7 +744,9 @@ static void SWF_Rectangle( double x0, double y0,
 	SWFShape_drawLineTo(rectangle, x0, y1);
 	SWFShape_drawLineTo(rectangle, x0, y0);	
 
-	SWFMovie_add(swfInfo->m, (SWFBlock) rectangle);
+	SWFDisplayItem rectangled = SWFMovie_add(swfInfo->m, (SWFBlock) rectangle);
+	
+	addToDisplayList( rectangled );
 			
 }
 		
@@ -776,7 +802,9 @@ static void SWF_Polyline( int n, double *x, double *y,
 				"\t\t(%5.1f,%5.1f)\n", x[i], y[i]);
 	}
 	
-	SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	SWFDisplayItem lined = SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	
+	addToDisplayList( lined );
 
 }
 	
@@ -826,7 +854,9 @@ static void SWF_Polygon( int n, double *x, double *y,
 		SWFShape_drawLineTo(line, x[i], y[i]);	
 	}
 		
-	SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	SWFDisplayItem polyd = SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	
+	addToDisplayList( polyd );
 			
 }
 
@@ -849,9 +879,9 @@ static void SetLineStyle(SWFShape shape, const pGEcontext plotParams,
 		red, green, blue, alpha);
 		
 	/* does not play nicely with setRightFill
-	SWFShape_setLine2(shape,
+	SWFShape_setLine2Filled(shape,
 		(unsigned short) plotParams->lwd,
-		red, green, blue, alpha,
+		newSWFSolidFillStyle( red, green, blue, alpha ),
 		SWF_LINESTYLE_CAP_ROUND,
 		plotParams->lmitre);
 	*/
@@ -900,34 +930,6 @@ static void SetFill(SWFShape shape, const pGEcontext plotParams,
 	SWFShape_setRightFillStyle(shape, fill_style);
 }
 
-/*static void FontSetup(){
-	
-	char *fonts[10] = {
-	"Bitstream Vera Serif.fdb",
-	"Bitstream Vera Serif-B.fdb",
-	"Bitstream Vera Sans.fdb",
-	"Bitstream Vera Sans-B.fdb",
-	"Bitstream Vera Sans-I.fdb"
-	"Bitstream Vera Sans-B-I.fdb",
-	"Bitstream Vera Sans Mono.fdb",
-	"Bitstream Vera Sans Mono-B.fdb",
-	"Bitstream Vera Sans Mono-I.fdb",
-	"Bitstream Vera Sans Mono-B-I.fdb"
-	};
-
-	int i;
-
-	for(i = 0; i < 11; i++){
-		char *tmp = fonts[i];
-		sprintf(fonts[i], BUFSIZE,
-			"%s%slibrary%sswfDevice%sinst%sfonts%sming-fonts-1.00%sfdb%s%s",
-			R_Home, FILESEP, FILESEP, FILESEP, FILESEP, FILESEP, FILESEP, 
-			FILESEP, tmp);
-		//myFont = newSWFFont_fromFile( fdbName );
-	}
-	
-};*/
-
 /*
  * This function is responsible for converting lengths given in page
  * dimensions (ie. inches, cm, etc.) to device dimensions (currenty
@@ -937,6 +939,28 @@ static void SetFill(SWFShape shape, const pGEcontext plotParams,
 */
 double dim2dev( double length ){
 	return length*72;
+}
+
+static void addToDisplayList(SWFDisplayItem item){
+	
+	//Get the device info by pointer since this can be called from R
+	pDevDesc deviceInfo = GEcurrentDevice()->dev;
+	
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	DisplayList *newItem;
+	if ((newItem = malloc(sizeof(DisplayList))) == NULL) { error(""); }
+	newItem->d = item;
+	
+	if ( swfInfo->displayListHead == NULL ) 
+		swfInfo->displayListHead = newItem;
+	else 
+		swfInfo->displayListTail->next = newItem;
+	
+	swfInfo->displayListTail = newItem; 
+	newItem->next = NULL;
+	
 }
 
 /*This function is called when the package is loaded because the variables 

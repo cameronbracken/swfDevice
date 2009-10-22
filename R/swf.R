@@ -6,7 +6,7 @@ function(file = "Rplots.swf", width=7, height=7, bg="white", fg="black",
 		fontFile <- system.file('fonts','ming-fonts-1.00',
 			'ttf','Vera.ttf',package='swfDevice')
 			
-	message(paste('Loading',fontFile))
+	#message(paste('Loading',fontFile))
 		
     .External('swfDevice', file, width, height, bg, fg, 
 		fontFile ,package='swfDevice')

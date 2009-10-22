@@ -9,6 +9,13 @@
 #include <Rinternals.h>
 #include <R_ext/GraphicsEngine.h>
 
+typedef struct display_list DisplayList;
+
+struct display_list { 
+	SWFDisplayItem d;
+	DisplayList *next;
+};
+
 typedef struct swfDevDesc{
 	FILE *logFile;
 	char outFileName[512];
@@ -16,8 +23,9 @@ typedef struct swfDevDesc{
 	SWFMovie m;
 	SWFFont font;
 	int nFrames;
+	DisplayList *displayListHead; 
+	DisplayList *displayListTail;
 } swfDevDesc;
-
 
 /* Function Prototypes */
 
@@ -75,5 +83,6 @@ static void SetLineStyle(SWFShape shape, const pGEcontext plotParams, swfDevDesc
 static void SetFill(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );
 static void SWF_LoadFont(const char *fontFile);
 static void SWF_Init();
+static void addToDisplayList(SWFDisplayItem item);
 
 #endif // End of Once Only header
