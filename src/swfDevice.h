@@ -14,6 +14,7 @@ typedef struct swfDevDesc{
 	char outFileName[512];
 	Rboolean debug;
 	SWFMovie m;
+	SWFFont font;
 	int nFrames;
 } swfDevDesc;
 
@@ -24,7 +25,8 @@ static Rboolean SWF_Setup(
 		pDevDesc deviceInfo,
 		const char *fileName,
 		double width, double height,
-		const char *bg, const char *fg);
+		const char *bg, const char *fg,
+		const char *fontFile);
 
 double dim2dev( double length );
 
@@ -71,5 +73,7 @@ static void SWF_Mode( int mode, pDevDesc deviceInfo );
 /*Custom functions*/
 static void SetLineStyle(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );
 static void SetFill(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );
+static void SWF_LoadFont(const char *fontFile);
+static void SWF_Init();
 
 #endif // End of Once Only header

@@ -1,1 +1,5 @@
-#Nothing to see here
+swfSetup <- function(){
+	
+	.C('Ming_init' ,package='swfDevice')
+	
+}

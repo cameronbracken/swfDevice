@@ -1,3 +1,5 @@
+MING_OPTS := $(shell /opt/local/bin/ming-config --libs --cflags)
+
 all: tests examples
 
 tests:
@@ -6,10 +8,12 @@ tests:
 
 examples: 
 	@echo "Running Ming Tests"
-	gcc -o testButtons -L/opt/local/lib -lming -I/opt/local/include testButtons.c 
+	gcc -o testButtons ${MING_OPTS} testButtons.c 
 	./testButtons
-	gcc -o testShapes -L/opt/local/lib -lming -I/opt/local/include testShapes.c 
-	./testShapes
+	gcc -o testText ${MING_OPTS} testText.c 
+	./testText
+	gcc -o testShapes ${MING_OPTS} testShapes.c 
+	./testShapes 
 
 clean:
-	rm *.swf testShapes testButtons
+	rm *.swf testShapes testButtons testText

@@ -68,9 +68,9 @@ int main(void)
 		squared = SWFMovie_add(test_movie, (SWFBlock) square);
 		circled = SWFMovie_add(test_movie, (SWFBlock) circle);
 
-		//SWFDisplayItem_moveTo(lined,10,10); 
-		//SWFDisplayItem_moveTo(squared,15,15); 
-		//SWFDisplayItem_moveTo(circled,190,0);
+		SWFDisplayItem_moveTo(lined,10,10); 
+		SWFDisplayItem_moveTo(squared,15,15); 
+		SWFDisplayItem_moveTo(circled,190,0);
 
         // Set the desired compression level for the output (9 = maximum compression)
         Ming_setSWFCompression(9);
@@ -78,5 +78,5 @@ int main(void)
         // Save the swf movie file to disk
         SWFMovie_save(test_movie, "ming-test-shapes.swf");
 
-		return 1;
+		return EXIT_SUCCESS;
 }

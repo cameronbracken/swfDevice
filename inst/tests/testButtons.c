@@ -195,7 +195,7 @@ int main(void)
         }
 
         // Save the swf movie file to disk
-        SWFMovie_save(my_movie, "ming-test-controlbar.swf");
+        SWFMovie_save(my_movie, "ming-test-buttons.swf");
 
         // Free the memory allocated in this function
         destroySWFMovie(my_movie);
