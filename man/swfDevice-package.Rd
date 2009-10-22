@@ -4,41 +4,35 @@
 \alias{swfDevice}
 \docType{package}
 \title{
-What the package does (short line)
-~~ package title ~~
+R graphics output in swf (flash) format.  
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+swfdevice provides the swf() graphics device which allows R graphics to be output as swf files by using the ming library.
 }
 \details{
 \tabular{ll}{
 Package: \tab swfDevice\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
-Date: \tab 2009-09-24\cr
-License: \tab What license is it under?\cr
+Date: \tab 2009-10-20\cr
+License: \tab GPL (>= 2.0)\cr
 LazyLoad: \tab yes\cr
 }
-~~ An overview of how to use the package, including the most important ~~
-~~ functions ~~
+Please see the help page for \code{\link{swf}} for more details.
 }
 \author{
-Who wrote it
-
-Maintainer: Who to complain to <yourfault@somewhere.net>
-~~ The author and/or maintainer of the package ~~
+Cameron Bracken \email{cameron.bracken@gmail.com}
 }
 \references{
-~~ Literature or other references for background information ~~
+The Ming Library: \url{http://www.libming.org/}
 }
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in ~~
-~~ the R documentation directory ~~
-\keyword{ package }
+\keyword{ 
+package 
+device
+}
 \seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
+\code{\link[swfDevice:swfDevice-package]{swfDevice}}
 }
 \examples{
-~~ simple examples of the most important functions ~~
+#coming soon 
 }

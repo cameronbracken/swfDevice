@@ -5,6 +5,36 @@ This package provides the swf() graphics device in R.  Using Ming library (http:
 
 TODO
 * Basically everything
+* Device features to address/investigate
+	- xCharOffset yCharOffset            
+	- yLineBias
+	- ipr: pixels per inch             
+	- cra: default character size in pixels
+	- gamma                  
+	- canClip: will be much harder than tikzDevice                 	
+	- canChangeGamma
+	- canHAdj: comes with text support
+	- startps: ditto        
+	- hasTextUTF8: should be possible with ming
+	- wantSymbolUTF8: ditto 
+	- useRotatedTextInContour: ditto 
 * Implement remaining graphics parameters, especially fill! 
-* Text support and character metrics (this will be a nightmare)
-* Multipage output
+	- gamma
+	- lty       
+	- lend
+	- ljoin
+	- lmitre
+	- ps        
+	- lineheight
+	- fontface
+	- fontfamily
+* Graphics primitives 
+	- metricInfo     
+	- newPage: multipage output
+	- strWidth
+	- text
+	- textUTF8       
+	- strWidthUTF8
+
+Lessons Learned
+* SWFShape_setRightFillStyle() and SWFShape_setLine2() do not play nicely
