@@ -1,7 +1,7 @@
 swfDevice: R graphics device for swf (flash) output
 Status: Pre-Alpha
 
-This package provides the swf() graphics device in R.  Using Ming library (http://www.libming.org/) , this device can create flash movies from R plotting commands.  My vision for this device is that multipage output will be rendered as movies with specifiable parameters and optional buttons for control. 
+__Status__: Pre-Alpha
 
 TODO
 * Basically everything
@@ -37,4 +37,19 @@ TODO
 	- strWidthUTF8
 
 Lessons Learned
-* SWFShape_setRightFillStyle() and SWFShape_setLine2() do not play nicely
+* SWFShape_setRightFillStyle() and SWFShape_setLine2() do not play nicely__Description__: This package provides the swf() graphics device in R.  Using Ming library (http://www.libming.org/) , this device can create flash movies from R plotting commands.  My vision for this device is that multipage output will be rendered as movies with specifiable parameters and optional buttons for control. 
+
+__System Requirements__: Depends on libming version >= 0.4.0beta5.  This version introduced support for ttf fonts without conversion.
+
+__TODO__
+
+* Line types, ljoin, lmitre
+* Character metrics (this will be a nightmare)
+* Windows support 
+
+__Planned Features__
+
+* Embedded player controls (play, pause, etc.)
+	- Customizable at the R level 
+* R Bindings to the ming library (will this really be useful?)
+	- Control subset of parameters at the R level

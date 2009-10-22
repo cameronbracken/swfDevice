@@ -1,10 +1,2 @@
 PKG_CPPFLAGS=@PKG_CPPFLAGS@
 PKG_LIBS=@PKG_LIBS@
-
-.PHONY: all fonts
-     
-all: $(SHLIB)
-$(SHLIB): fonts
-
-fonts:
-	(cd ../inst/fonts; tar -xzf ming-fonts-1.00.tar.gz)
