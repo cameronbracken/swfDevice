@@ -404,7 +404,14 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 
 }
 
-/*Called when the user calls dev.off()*/
+	/*
+     * device_Close is called when the device is killed (dev.off).
+     * This function is responsible for destroying any
+     * device-specific resources that were created in
+     * device_Open and for FREEing the device-specific
+     * parameters structure.
+     *
+     */
 static void SWF_Close( pDevDesc deviceInfo){
 
 	/* Shortcut pointers to variables of interest. */
@@ -440,7 +447,14 @@ static void SWF_Close( pDevDesc deviceInfo){
 }
 
 
-/* Utility routines. */
+	/*
+     * device_NewPage is called whenever a new plot requires
+     * a new page.
+     * A new page might mean just clearing the
+     * device (e.g., X11) or moving to a new page
+     * (e.g., postscript)
+     *
+     */
 static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
 	
 	/* Shortcut pointers to variables of interest. */
@@ -472,9 +486,34 @@ static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
 	
 }
 
+
+	/*
+     * device_Clip is given the left, right, bottom, and
+     * top of a rectangle (in DEVICE coordinates).
+     * It should have the side-effect that subsequent output
+     * is clipped to the given rectangle.
+     * NOTE that R's graphics engine already clips to the
+     * extent of the device.
+     * NOTE also that this will probably only be called if
+     * the flag canClip is true.
+     */
 static void SWF_Clip( double x0, double x1,
 		double y0, double y1, pDevDesc deviceInfo ){}
 		
+		
+	/*
+     * device_Size is called whenever the device is
+     * resized.
+     * The function returns (left, right, bottom, and top) for the
+     * new device size.
+     * This is not usually called directly by the graphics
+     * engine because the detection of device resizes
+     * (e.g., a window resize) are usually detected by
+     * device-specific code.
+     *
+     * R_GE_gcontext parameters that should be honoured (if possible):
+     *   col, fill, gamma, lty, lwd
+     */
 static void SWF_Size( double *left, double *right,
 		double *bottom, double *top, pDevDesc deviceInfo){
 	/* Return canvas size. */
@@ -485,7 +524,21 @@ static void SWF_Size( double *left, double *right,
 }
 
 
-/* Text routines. */
+ 	/*
+     * device_MetricInfo should return height, depth, and
+     * width information for the given character in DEVICE
+     * units.
+     * Note: in an 8-bit locale, c is 'char'.
+     * In an mbcslocale, it is wchar_t, and at least some
+     * of code assumes that is UCS-2 (Windows, true) or UCS-4.
+     * This is used for formatting mathematical expressions
+     * and for exact centering of text (see GText)
+     * If the device cannot provide metric information then
+     * it MUST return 0.0 for ascent, descent, and width.
+     *
+     * R_GE_gcontext parameters that should be honoured (if possible):
+     *   font, cex, ps
+     */
 static void SWF_MetricInfo( int c, const pGEcontext plotParams,
 		double *ascent, double *descent, double *width, pDevDesc deviceInfo ){
 
@@ -523,6 +576,19 @@ static void SWF_MetricInfo( int c, const pGEcontext plotParams,
 	
 		
 }
+
+ /*
+     * device_StrWidth should return the width of the given
+     * string in DEVICE units.
+     * An example is ...
+     *
+     * static double X11_StrWidth(const char *str,
+     *                            const pGEcontext gc,
+     *                            pDevDesc dd)
+     *
+     * R_GE_gcontext parameters that should be honoured (if possible):
+     *   font, cex, ps
+     */
 static double SWF_StrWidth( const char *str,
 		const pGEcontext plotParams, pDevDesc deviceInfo )
 {
@@ -548,6 +614,14 @@ static double SWF_StrWidth( const char *str,
 	return width;
 }
 
+    /*
+     * device_Text should have the side-effect that the
+     * given text is drawn at the given location.
+     * The text should be rotated according to rot (degrees)
+     *
+     * R_GE_gcontext parameters that should be honoured (if possible):
+     *   font, cex, ps, col, gamma
+     */
 static void SWF_Text( double x, double y, const char *str,
 		double rot, double hadj, const pGEcontext plotParams, 
 		pDevDesc deviceInfo)
@@ -623,7 +697,7 @@ static void SWF_Line( double x1, double y1,
 	SWFShape_movePenTo(line, x1, y1);
 	
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
-		SetLineStyle(line, plotParams, swfInfo);
+		SWF_SetLineStyle(line, plotParams, swfInfo);
 		
 	SWFShape_drawLineTo(line, x2, y2);
 
@@ -669,10 +743,10 @@ static void SWF_Circle( double x, double y, double r,
 
 	// this is causing the shapes not to be drawn???
 	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
-		SetFill( circle,  plotParams, swfInfo);
+		SWF_SetFill( circle,  plotParams, swfInfo);
 
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
-		SetLineStyle( circle,  plotParams, swfInfo);
+		SWF_SetLineStyle( circle,  plotParams, swfInfo);
 	
 	// draws a circle with radius r 
 	// centered at (x,y) into shape circle
@@ -732,10 +806,10 @@ static void SWF_Rectangle( double x0, double y0,
 	y1 = deviceInfo->top - y1;
 
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
-		SetLineStyle(rectangle, plotParams, swfInfo);
+		SWF_SetLineStyle(rectangle, plotParams, swfInfo);
 		
 	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
-		SetFill(rectangle, plotParams, swfInfo);
+		SWF_SetFill(rectangle, plotParams, swfInfo);
 
 	/* Start the pen at the first point */
 	SWFShape_movePenTo(rectangle, x0, y0);
@@ -775,7 +849,7 @@ static void SWF_Polyline( int n, double *x, double *y,
 	line = newSWFShape();
 	
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
-		SetLineStyle(line, plotParams, swfInfo);
+		SWF_SetLineStyle(line, plotParams, swfInfo);
 	
 	
 	/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
@@ -867,10 +941,12 @@ static void SWF_SetLineStyle(SWFShape shape, const pGEcontext plotParams,
 	byte green = R_GREEN(plotParams->col);
 	byte blue = R_BLUE(plotParams->col);
 	byte alpha =  R_ALPHA(plotParams->col);
-	fprintf(swfInfo->logFile,"\tLineStyle: Red=%d, ",red);
-	fprintf(swfInfo->logFile,"Green=%d, ",green);
-	fprintf(swfInfo->logFile,"Blue=%d, ",blue);
-	fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
+	if( swfInfo->debug == TRUE ){
+		fprintf(swfInfo->logFile,"\tLineStyle: Red=%d, ",red);
+		fprintf(swfInfo->logFile,"Green=%d, ",green);
+		fprintf(swfInfo->logFile,"Blue=%d, ",blue);
+		fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
+	}
 	
 	//FIXME: Honor all the line parameters such as 
 	//lty, lend, ljoin 
@@ -890,7 +966,7 @@ static void SWF_SetLineStyle(SWFShape shape, const pGEcontext plotParams,
 }
 
 
-static void SWFSetFill(SWFShape shape, const pGEcontext plotParams, 
+static void SWF_SetFill(SWFShape shape, const pGEcontext plotParams, 
 	swfDevDesc *swfInfo  ){
 	
 	/*
@@ -918,10 +994,12 @@ static void SWFSetFill(SWFShape shape, const pGEcontext plotParams,
 	//Top 8 bits: 255 = opaque, 0 = transparent
 	byte alpha = R_ALPHA(plotParams->fill);
 	
-	fprintf(swfInfo->logFile,"\tFill: Red=%d, ",red);
-	fprintf(swfInfo->logFile,"Green=%d, ",green);
-	fprintf(swfInfo->logFile,"Blue=%d, ",blue);
-	fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
+	if( swfInfo->debug == TRUE ){
+		fprintf(swfInfo->logFile,"\tFill: Red=%d, ",red);
+		fprintf(swfInfo->logFile,"Green=%d, ",green);
+		fprintf(swfInfo->logFile,"Blue=%d, ",blue);
+		fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
+	}
 		
 		
 		
