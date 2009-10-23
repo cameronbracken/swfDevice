@@ -1,4 +1,4 @@
-AC_INIT([swfDevice], 0.1)
+AC_INIT([swfDevice], 0.3)
 
 MING_CONFIG="ming-config"
 
@@ -40,15 +40,19 @@ MING_VERSION=`${MING_CONFIG} --version`
 VER2=`echo "$MING_VERSION" | cut -d"." -f2`
 REQ2_MING="4"
 VER3=`echo "$MING_VERSION" | cut -d"." -f3`
-REQ3_MING="2"
+REQ3_MING="0"
 echo "Found libming version $MING_VERSION."
 if test "$VER2" -lt "$REQ2_MING" ; then
-    echo "For building this version, at least libming version 0.4.2 is required."
+    echo "For building swfDevice, at least libming version 0.4.0 is required."
     exit 1
 fi
 if test "$VER2" -eq "$REQ2_MING" ; then
     if test "$VER3" -lt "$REQ3_MING" ; then
-        echo "For building this version, at least libming version 1.3.1 is required."
+        echo "For building swfDevice, at least libming version 0.4.0 is required."
+        exit 1
+    fi
+	if test "$VER3" -eg "$REQ3_MING" ; then
+        echo "You are using libming version 0.4.0, please make sure you are using Beta 5 or later."
         exit 1
     fi
 fi

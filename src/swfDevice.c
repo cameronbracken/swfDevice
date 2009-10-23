@@ -45,7 +45,8 @@ SEXP swfDevice ( SEXP args ){
 	/* Declare local variabls for holding the components of the args SEXP */
 	const char *fileName;
 	const char *bg, *fg;
-	double width, height;
+	double width, height, frameRate;
+	const char *fontFile;
 
 	/* 
 	 * pGEDevDesc is a variable provided by the R Graphics Engine
@@ -79,6 +80,8 @@ SEXP swfDevice ( SEXP args ){
 	/* Recover initial background and foreground colors. */
 	bg = CHAR(asChar(CAR(args))); args = CDR(args);
 	fg = CHAR(asChar(CAR(args))); args = CDR(args);
+	frameRate = asReal(asChar(CAR(args))); args = CDR(args);
+	fontFile = CHAR(asChar(CAR(args))); args = CDR(args);
 	
 	
 
@@ -108,7 +111,7 @@ SEXP swfDevice ( SEXP args ){
 		 * R graphics function hooks with the appropriate C routines
 		 * in this file.
 		*/
-		if( !SWF_Setup( deviceInfo, fileName, width, height, bg, fg ) ){
+		if( !SWF_Setup( deviceInfo, fileName, width, height, bg, fg, frameRate, fontFile ) ){
 			/* 
 			 * If setup was unsuccessful, destroy the device and return
 			 * an error message.
@@ -140,11 +143,9 @@ SEXP swfDevice ( SEXP args ){
  * like "private"... 
 */
 
-static Rboolean SWF_Setup(
-	pDevDesc deviceInfo,
-	const char *fileName,
-	double width, double height,
-	const char *bg, const char *fg ){
+static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
+	double width, double height, const char *bg, const char *fg, 
+	double frameRate, const char *fontFile ){
 
 	/* 
 	 * Create swfInfo, this variable contains information which is
@@ -185,9 +186,13 @@ static Rboolean SWF_Setup(
 	strcpy( swfInfo->outFileName, fileName);
 	swfInfo->debug = DEBUG;
 	swfInfo->nFrames = 0;
+	swfInfo->frameRate = 0;
+	swfInfo->polyLine = FALSE;
 	/*Initilize the SWF movie version 8 so more line styles can be used*/
-	Ming_init();
 	swfInfo->m = newSWFMovieWithVersion(8);
+	swfInfo->font = newSWFFont_fromFile(fontFile);
+	swfInfo->displayListHead = NULL; 
+	swfInfo->displayListTail = NULL;
 
 	/* Incorporate swfInfo into deviceInfo. */
 	deviceInfo->deviceSpecific = (void *) swfInfo;
@@ -363,7 +368,6 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 	*/
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
 
-	//firstTry();
 	//Debug log
 	if( swfInfo->debug == TRUE ){
 		if( !( swfInfo->logFile = fopen(R_ExpandFileName("swfDevice.log"), "w") ) )
@@ -390,16 +394,17 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 		
 	SWFMovie_setDimension(swfInfo->m, deviceInfo->right, deviceInfo->top);
 
-	// Set the frame rate for the movie to 12 frames per second
-	SWFMovie_setRate(swfInfo->m, 2.0);
-
-	// Set the total number of frames in the movie to 120
+	// Set the frame rate for the movie
+	SWFMovie_setRate(swfInfo->m, swfInfo->frameRate);
+	
+	// Set the total number of frames in the movie to 1
 	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
 
 	return TRUE;
 
 }
 
+/*Called when the user calls dev.off()*/
 static void SWF_Close( pDevDesc deviceInfo){
 
 	/* Shortcut pointers to variables of interest. */
@@ -408,18 +413,27 @@ static void SWF_Close( pDevDesc deviceInfo){
 	//If there is an open deug log, close it
 	if( swfInfo->debug == TRUE ){
 		fprintf(swfInfo->logFile,
+			"SWF_Close: ending movie with %d frames\n",swfInfo->nFrames);
+		fprintf(swfInfo->logFile,
 			"SWF_Close: end swf output\n");
 		fclose(swfInfo->logFile);
 	}
 	
-	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
-	
 	// Set the desired compression level for the output (9 = maximum compression)
-	Ming_setSWFCompression(1);
+	Ming_setSWFCompression(9);
 	
+	//For some reason the last frame does't get drawn unless this happens
+	// but then an extra blank frame gets entered?
+	if( swfInfo->nFrames > 1 )
+		SWFMovie_nextFrame( swfInfo->m );
+		
 	// Save the swf movie file to disk
     SWFMovie_save(swfInfo->m, swfInfo->outFileName);
-
+	
+	//Clear the movie reference 
+	destroySWFMovie(swfInfo->m);
+	Ming_cleanup();
+	
 	/* Destroy the swfInfo structure. */
 	free(swfInfo);
 
@@ -441,7 +455,19 @@ static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
 	 * This function adds a new frame to the current movie. All items added, removed
 	 * manipulated effect this frame and probably following frames.
 	 */
-	//SWFMovie_nextFrame( swfInfo->m );
+	if(!(swfInfo->nFrames == 0)){
+		SWFMovie_nextFrame( swfInfo->m );
+		
+		//Wipe the slate clean 
+		// nextFrame draws all the ojects and then advances the frame
+		// so remove all the objects in the display list and start over
+		while (swfInfo->displayListHead) {
+			swfInfo->displayListTail = swfInfo->displayListHead->next;
+			SWFDisplayItem_remove(swfInfo->displayListHead->d);
+			free(swfInfo->displayListHead);
+			swfInfo->displayListHead = swfInfo->displayListTail;
+		}
+	}
 	swfInfo->nFrames++;
 	
 }
@@ -463,28 +489,111 @@ static void SWF_Size( double *left, double *right,
 static void SWF_MetricInfo( int c, const pGEcontext plotParams,
 		double *ascent, double *descent, double *width, pDevDesc deviceInfo ){
 
-			*ascent = 0;
-			*descent = 0;			
-			*width = 0;
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+
+	SWFText text_object = newSWFText();
+	//char *s;
+	//sprintf(s, "%c", c);
+
+	// Tell the text object to use the font previously loaded
+	SWFText_setFont(text_object, swfInfo->font);
+
+	// Set the height of the text
+	SWFText_setHeight(text_object, plotParams->ps * plotParams->cex);
+
+	// Add a string to the text object
+	//FIXME!!! pass real character.
+	SWFText_addString(text_object, "a", NULL);
+
+	double a = SWFText_getAscent(text_object);
+	double d = SWFText_getDescent(text_object);
+	double w = SWFText_getStringWidth(text_object, "a");
+	
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile,
+			"SWF_MetricInfo: Calculated Ascent=%5.2f, Decent=%5.2f, Width=%5.2f\n", 
+				a, d, w);
+	
+	*ascent = a;
+	*descent = d;
+	*width = w;
+	
+	destroySWFText(text_object);
+	
+		
 }
 static double SWF_StrWidth( const char *str,
 		const pGEcontext plotParams, pDevDesc deviceInfo )
 {
-	return 0.0;
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	SWFText text_object = newSWFText();
+	
+	// Tell the text object to use the font previously loaded
+	SWFText_setFont(text_object, swfInfo->font);
+	
+	// Set the height of the text
+	SWFText_setHeight(text_object, plotParams->ps * plotParams->cex);
+	
+	float width = SWFText_getStringWidth(text_object, str);
+	
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile,
+			"SWF_StrWidth: Calculated Width of \"%s\" as %7.2f\n", str, width);
+	
+	destroySWFText(text_object);
+	
+	return width;
 }
 
 static void SWF_Text( double x, double y, const char *str,
-		double rot, double hadj, const pGEcontext plotParams, pDevDesc deviceInfo)
+		double rot, double hadj, const pGEcontext plotParams, 
+		pDevDesc deviceInfo)
 {
 	/* Shortcut pointers to variables of interest. */
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
 	
 	if( swfInfo->debug == TRUE )
 		fprintf(swfInfo->logFile,
-			"SWF_Text: Writing Text\n");	
+			"SWF_Text: Writing Text \"%s\"\n", str);	
+	
+	/* It is possible that this will be very expensive and storing 
+	 * a single text object in swfInfo may be better.
+	 */
+	SWFText text_object = newSWFText();
+	SWFDisplayItem text_display;
+	/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
+	y = deviceInfo->top - y;
+	
+	// Tell the text object to use the font previously loaded
+	SWFText_setFont(text_object, swfInfo->font);
+	
+	// Set the height of the text
+	SWFText_setHeight(text_object, plotParams->ps * plotParams->cex);
+	
+	// Set the color of the text
+	byte red = R_RED(plotParams->col);
+	byte green = R_GREEN(plotParams->col);
+	byte blue = R_BLUE(plotParams->col);
+	byte alpha =  R_ALPHA(plotParams->col);
+	SWFText_setColor(text_object, red, green, blue, alpha);
+	
+	// Add a string to the text object
+	SWFText_addString(text_object, str, NULL);
+	
+	// Add the text object to the movie (at 0,0)
+	text_display = SWFMovie_add(swfInfo->m, (SWFBlock) text_object);
+	
+	addToDisplayList( text_display );
+	
+	// Move to correct coordinate and rotate
+	SWFDisplayItem_moveTo(text_display, x, y);
+	SWFDisplayItem_rotate(text_display, rot);
+	
 			
 }
-
 
 
     /*
@@ -507,6 +616,9 @@ static void SWF_Line( double x1, double y1,
 			x1,y1,x2,y2);
 	}
 	SWFShape line = newSWFShape();
+	/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
+	y1 = deviceInfo->top - y1;
+	y2 = deviceInfo->top - y2;
 	
 	SWFShape_movePenTo(line, x1, y1);
 	
@@ -515,7 +627,9 @@ static void SWF_Line( double x1, double y1,
 		
 	SWFShape_drawLineTo(line, x2, y2);
 
-	SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	SWFDisplayItem lined = SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	
+	addToDisplayList( lined );
 	
 }
 
@@ -550,6 +664,8 @@ static void SWF_Circle( double x, double y, double r,
 	circle = newSWFShape();
 	
 	SWFShape_movePenTo(circle, x, y);
+	/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
+	y = deviceInfo->top - y;
 
 	// this is causing the shapes not to be drawn???
 	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
@@ -582,13 +698,10 @@ static void SWF_Circle( double x, double y, double r,
 	// I would like to use this function but the circles 
 	// drawn with it are funky
 	//SWFShape_drawCircle(circle, r);
-	
 
-	//SWFDisplayItem circled;
-	//circled = 
-	SWFMovie_add(swfInfo->m, (SWFBlock) circle);
-	//SWFDisplayItem_moveTo(circled,x,y);
-	
+	SWFDisplayItem circled = SWFMovie_add(swfInfo->m, (SWFBlock) circle);
+
+	addToDisplayList( circled );
 			
 }
 		
@@ -614,6 +727,9 @@ static void SWF_Rectangle( double x0, double y0,
 			
 	SWFShape rectangle;
 	rectangle = newSWFShape();
+	/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
+	y0 = deviceInfo->top - y0;
+	y1 = deviceInfo->top - y1;
 
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
 		SetLineStyle(rectangle, plotParams, swfInfo);
@@ -627,10 +743,12 @@ static void SWF_Rectangle( double x0, double y0,
 	/* Draw the four line segments on the rectangle */
 	SWFShape_drawLineTo(rectangle, x0, y1);
 	SWFShape_drawLineTo(rectangle, x1, y1);
-	SWFShape_drawLineTo(rectangle, x0, y1);
+	SWFShape_drawLineTo(rectangle, x1, y0);
 	SWFShape_drawLineTo(rectangle, x0, y0);	
 
-	SWFMovie_add(swfInfo->m, (SWFBlock) rectangle);
+	SWFDisplayItem rectangled = SWFMovie_add(swfInfo->m, (SWFBlock) rectangle);
+	
+	addToDisplayList( rectangled );
 			
 }
 		
@@ -658,9 +776,10 @@ static void SWF_Polyline( int n, double *x, double *y,
 	
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
 		SetLineStyle(line, plotParams, swfInfo);
-		
-	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
-		SetFill(line, plotParams, swfInfo);
+	
+	
+	/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
+	y[0] = deviceInfo->top - y[0];
 	
 	/* Start the pen at the first point */
 	SWFShape_movePenTo(line, x[0], y[0]);
@@ -672,6 +791,10 @@ static void SWF_Polyline( int n, double *x, double *y,
 	/* Print coordinates for the middle segments of the line. */
 	int i;
 	for ( i = 1; i < n; i++ ){
+		
+		/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
+		y[i] = deviceInfo->top - y[i];
+		
 		SWFShape_drawLineTo(line, x[i], y[i]);	
 		
 		if( swfInfo->debug == TRUE )
@@ -679,7 +802,9 @@ static void SWF_Polyline( int n, double *x, double *y,
 				"\t\t(%5.1f,%5.1f)\n", x[i], y[i]);
 	}
 	
-	SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	SWFDisplayItem lined = SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	
+	addToDisplayList( lined );
 
 }
 	
@@ -708,25 +833,34 @@ static void SWF_Polygon( int n, double *x, double *y,
 	line = newSWFShape();
 
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
-		SetLineStyle(line, plotParams, swfInfo);
+		SWF_SetLineStyle(line, plotParams, swfInfo);
 	
 	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
-		SetFill(line, plotParams, swfInfo);
+		SWF_SetFill(line, plotParams, swfInfo);
 		
+	/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
+	y[0] = deviceInfo->top - y[0];
+	
 	/* Start the pen at the first point */
 	SWFShape_movePenTo(line, x[0], y[0]);
 
 	/* Print coordinates for the middle segments of the line. */
 	int i;
 	for ( i = 1; i < n; i++ ){
+		
+		/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
+		y[0] = deviceInfo->top - y[0];
+		
 		SWFShape_drawLineTo(line, x[i], y[i]);	
 	}
 		
-	SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	SWFDisplayItem polyd = SWFMovie_add(swfInfo->m, (SWFBlock) line);
+	
+	addToDisplayList( polyd );
 			
 }
 
-static void SetLineStyle(SWFShape shape, const pGEcontext plotParams, 
+static void SWF_SetLineStyle(SWFShape shape, const pGEcontext plotParams, 
 	swfDevDesc *swfInfo ){
 	
 	byte red = R_RED(plotParams->col);
@@ -744,10 +878,10 @@ static void SetLineStyle(SWFShape shape, const pGEcontext plotParams,
 		(unsigned short) plotParams->lwd,
 		red, green, blue, alpha);
 		
-	/*
-	SWFShape_setLine2(shape,
+	/* does not play nicely with setRightFill
+	SWFShape_setLine2Filled(shape,
 		(unsigned short) plotParams->lwd,
-		red, green, blue, alpha,
+		newSWFSolidFillStyle( red, green, blue, alpha ),
 		SWF_LINESTYLE_CAP_ROUND,
 		plotParams->lmitre);
 	*/
@@ -756,7 +890,7 @@ static void SetLineStyle(SWFShape shape, const pGEcontext plotParams,
 }
 
 
-static void SetFill(SWFShape shape, const pGEcontext plotParams, 
+static void SWFSetFill(SWFShape shape, const pGEcontext plotParams, 
 	swfDevDesc *swfInfo  ){
 	
 	/*
@@ -788,6 +922,9 @@ static void SetFill(SWFShape shape, const pGEcontext plotParams,
 	fprintf(swfInfo->logFile,"Green=%d, ",green);
 	fprintf(swfInfo->logFile,"Blue=%d, ",blue);
 	fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
+		
+		
+		
 	
 	SWFFillStyle fill_style;
 	fill_style = newSWFSolidFillStyle( red, green, blue, alpha );
@@ -795,34 +932,6 @@ static void SetFill(SWFShape shape, const pGEcontext plotParams,
 		error("Failed to allocate memory for fill object!");
 	SWFShape_setRightFillStyle(shape, fill_style);
 }
-
-/*static void FontSetup(){
-	
-	char *fonts[10] = {
-	"Bitstream Vera Serif.fdb",
-	"Bitstream Vera Serif-B.fdb",
-	"Bitstream Vera Sans.fdb",
-	"Bitstream Vera Sans-B.fdb",
-	"Bitstream Vera Sans-I.fdb"
-	"Bitstream Vera Sans-B-I.fdb",
-	"Bitstream Vera Sans Mono.fdb",
-	"Bitstream Vera Sans Mono-B.fdb",
-	"Bitstream Vera Sans Mono-I.fdb",
-	"Bitstream Vera Sans Mono-B-I.fdb"
-	};
-
-	int i;
-
-	for(i = 0; i < 11; i++){
-		char *tmp = fonts[i];
-		sprintf(fonts[i], BUFSIZE,
-			"%s%slibrary%sswfDevice%sinst%sfonts%sming-fonts-1.00%sfdb%s%s",
-			R_Home, FILESEP, FILESEP, FILESEP, FILESEP, FILESEP, FILESEP, 
-			FILESEP, tmp);
-		//myFont = newSWFFont_fromFile( fdbName );
-	}
-	
-};*/
 
 /*
  * This function is responsible for converting lengths given in page
@@ -835,8 +944,53 @@ double dim2dev( double length ){
 	return length*72;
 }
 
-static void SWFLoadFont(){
+static void addToDisplayList(SWFDisplayItem item){
 	
+	//Get the device info by pointer since this can be called from R
+	pDevDesc deviceInfo = GEcurrentDevice()->dev;
+	
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	DisplayList *newItem;
+	if ((newItem = malloc(sizeof(DisplayList))) == NULL) { error(""); }
+	newItem->d = item;
+	
+	if ( swfInfo->displayListHead == NULL ) 
+		swfInfo->displayListHead = newItem;
+	else 
+		swfInfo->displayListTail->next = newItem;
+	
+	swfInfo->displayListTail = newItem; 
+	newItem->next = NULL;
+	
+}
+
+/*This function is called when the package is loaded because the variables 
+ * loaded in Ming_init() persist even when a device is closed. This way the 
+ * warning about changing swf version during a run is avoided. 
+*/
+static void SWF_Init(){
+	
+	Ming_init();
+	
+}
+
+/*Called on startup to loaddefault font, can also be called from R to 
+ * load a user provided font. 
+ */
+static void SWF_LoadFont(const char *fontFile){
+	
+	//Get the device info by pointer since this can be called from R
+	pDevDesc deviceInfo = GEcurrentDevice()->dev;
+	
+	/* Shortcut pointers to variables of interest. */
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	//Load a fdb or ttf font
+	//XXX - can this work with ttc fonts?
+	//warning(fontFile);
+	swfInfo->font = newSWFFont_fromFile(fontFile);
 	
 	
 }
