@@ -1,6 +1,6 @@
 swf <- 
-function(file = "Rplots.swf", width=7, height=7, bg="white", fg="black", 
-	fontFile = NULL){
+function(file = "Rplots.swf", width = 7, height = 7, bg = "white", 
+	fg = "black", frameRate = 12, fontFile = NULL){
 	
 	if(is.null(fontFile))
 		fontFile <- system.file('fonts','ming-fonts-1.00',
@@ -9,7 +9,7 @@ function(file = "Rplots.swf", width=7, height=7, bg="white", fg="black",
 	#message(paste('Loading',fontFile))
 		
     .External('swfDevice', file, width, height, bg, fg, 
-		fontFile ,package='swfDevice')
+		frameRate, fontFile ,package='swfDevice')
 	invisible()
 	
 }

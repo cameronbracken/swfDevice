@@ -23,18 +23,17 @@ typedef struct swfDevDesc{
 	SWFMovie m;
 	SWFFont font;
 	int nFrames;
+	double frameRate;
+	Rboolean polyLine;
 	DisplayList *displayListHead; 
 	DisplayList *displayListTail;
 } swfDevDesc;
 
 /* Function Prototypes */
 
-static Rboolean SWF_Setup(
-		pDevDesc deviceInfo,
-		const char *fileName,
-		double width, double height,
-		const char *bg, const char *fg,
-		const char *fontFile);
+static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
+	double width, double height, const char *bg, const char *fg, 
+	double frameRate, const char *fontFile );
 
 double dim2dev( double length );
 
@@ -79,8 +78,8 @@ static Rboolean SWF_Locator( double *x, double *y, pDevDesc deviceInfo );
 static void SWF_Mode( int mode, pDevDesc deviceInfo );
 
 /*Custom functions*/
-static void SetLineStyle(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );
-static void SetFill(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );
+static void SWF_SetLineStyle(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );
+static void SWF_SetFill(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );
 static void SWF_LoadFont(const char *fontFile);
 static void SWF_Init();
 static void addToDisplayList(SWFDisplayItem item);
