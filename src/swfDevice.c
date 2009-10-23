@@ -45,7 +45,7 @@ SEXP swfDevice ( SEXP args ){
 	/* Declare local variabls for holding the components of the args SEXP */
 	const char *fileName;
 	const char *bg, *fg;
-	double width, height;
+	double width, height, frameRate;
 	const char *fontFile;
 
 	/* 
@@ -80,6 +80,7 @@ SEXP swfDevice ( SEXP args ){
 	/* Recover initial background and foreground colors. */
 	bg = CHAR(asChar(CAR(args))); args = CDR(args);
 	fg = CHAR(asChar(CAR(args))); args = CDR(args);
+	frameRate = asReal(asChar(CAR(args))); args = CDR(args);
 	fontFile = CHAR(asChar(CAR(args))); args = CDR(args);
 	
 	
@@ -110,7 +111,7 @@ SEXP swfDevice ( SEXP args ){
 		 * R graphics function hooks with the appropriate C routines
 		 * in this file.
 		*/
-		if( !SWF_Setup( deviceInfo, fileName, width, height, bg, fg, fontFile ) ){
+		if( !SWF_Setup( deviceInfo, fileName, width, height, bg, fg, frameRate, fontFile ) ){
 			/* 
 			 * If setup was unsuccessful, destroy the device and return
 			 * an error message.
@@ -144,7 +145,7 @@ SEXP swfDevice ( SEXP args ){
 
 static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	double width, double height, const char *bg, const char *fg, 
-	const char *fontFile ){
+	double frameRate, const char *fontFile ){
 
 	/* 
 	 * Create swfInfo, this variable contains information which is
@@ -185,6 +186,8 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	strcpy( swfInfo->outFileName, fileName);
 	swfInfo->debug = DEBUG;
 	swfInfo->nFrames = 0;
+	swfInfo->frameRate = 0;
+	swfInfo->polyLine = FALSE;
 	/*Initilize the SWF movie version 8 so more line styles can be used*/
 	swfInfo->m = newSWFMovieWithVersion(8);
 	swfInfo->font = newSWFFont_fromFile(fontFile);
@@ -391,9 +394,8 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 		
 	SWFMovie_setDimension(swfInfo->m, deviceInfo->right, deviceInfo->top);
 
-	// Set the frame rate for the movie to 2 frames per second
-	//FIXME - pass this in as a parameter
-	SWFMovie_setRate(swfInfo->m, 12);
+	// Set the frame rate for the movie
+	SWFMovie_setRate(swfInfo->m, swfInfo->frameRate);
 	
 	// Set the total number of frames in the movie to 1
 	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
@@ -547,7 +549,8 @@ static double SWF_StrWidth( const char *str,
 }
 
 static void SWF_Text( double x, double y, const char *str,
-		double rot, double hadj, const pGEcontext plotParams, pDevDesc deviceInfo)
+		double rot, double hadj, const pGEcontext plotParams, 
+		pDevDesc deviceInfo)
 {
 	/* Shortcut pointers to variables of interest. */
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
@@ -695,7 +698,6 @@ static void SWF_Circle( double x, double y, double r,
 	// I would like to use this function but the circles 
 	// drawn with it are funky
 	//SWFShape_drawCircle(circle, r);
-	
 
 	SWFDisplayItem circled = SWFMovie_add(swfInfo->m, (SWFBlock) circle);
 
@@ -741,7 +743,7 @@ static void SWF_Rectangle( double x0, double y0,
 	/* Draw the four line segments on the rectangle */
 	SWFShape_drawLineTo(rectangle, x0, y1);
 	SWFShape_drawLineTo(rectangle, x1, y1);
-	SWFShape_drawLineTo(rectangle, x0, y1);
+	SWFShape_drawLineTo(rectangle, x1, y0);
 	SWFShape_drawLineTo(rectangle, x0, y0);	
 
 	SWFDisplayItem rectangled = SWFMovie_add(swfInfo->m, (SWFBlock) rectangle);
@@ -774,9 +776,7 @@ static void SWF_Polyline( int n, double *x, double *y,
 	
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
 		SetLineStyle(line, plotParams, swfInfo);
-		
-	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
-		SetFill(line, plotParams, swfInfo);
+	
 	
 	/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
 	y[0] = deviceInfo->top - y[0];
@@ -833,10 +833,10 @@ static void SWF_Polygon( int n, double *x, double *y,
 	line = newSWFShape();
 
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
-		SetLineStyle(line, plotParams, swfInfo);
+		SWF_SetLineStyle(line, plotParams, swfInfo);
 	
 	if( plotParams->fill != R_RGBA(255, 255, 255, 0) )
-		SetFill(line, plotParams, swfInfo);
+		SWF_SetFill(line, plotParams, swfInfo);
 		
 	/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
 	y[0] = deviceInfo->top - y[0];
@@ -860,7 +860,7 @@ static void SWF_Polygon( int n, double *x, double *y,
 			
 }
 
-static void SetLineStyle(SWFShape shape, const pGEcontext plotParams, 
+static void SWF_SetLineStyle(SWFShape shape, const pGEcontext plotParams, 
 	swfDevDesc *swfInfo ){
 	
 	byte red = R_RED(plotParams->col);
@@ -890,7 +890,7 @@ static void SetLineStyle(SWFShape shape, const pGEcontext plotParams,
 }
 
 
-static void SetFill(SWFShape shape, const pGEcontext plotParams, 
+static void SWFSetFill(SWFShape shape, const pGEcontext plotParams, 
 	swfDevDesc *swfInfo  ){
 	
 	/*
@@ -922,6 +922,9 @@ static void SetFill(SWFShape shape, const pGEcontext plotParams,
 	fprintf(swfInfo->logFile,"Green=%d, ",green);
 	fprintf(swfInfo->logFile,"Blue=%d, ",blue);
 	fprintf(swfInfo->logFile,"Alpha=%d\n",alpha);
+		
+		
+		
 	
 	SWFFillStyle fill_style;
 	fill_style = newSWFSolidFillStyle( red, green, blue, alpha );
