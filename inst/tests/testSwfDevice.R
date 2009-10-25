@@ -57,9 +57,11 @@ tests <- list(
 		
 	},
 	
+	#test of fontface and fontfamily
 	function(main){
 		
-		plot(12:1,1:12,type='n',xlim=c(0,12),ylim=c(0,12))
+		plot(12:1,1:12,type='n',axes=F,xlim=c(0,12),ylim=c(1,12),xlab='',ylab='')
+		box()
 		text(1,12,"serif normal",font=1,family='serif')
 		text(2,11,"serif bold",font=2,family='serif')
 		text(3,10,"serif italic",font=3,family='serif')

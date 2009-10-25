@@ -27,8 +27,6 @@ __Todo__
 	- ljoin
 	- lmitre
 	- lineheight
-	- fontface
-	- fontfamily
 * Graphics primitives 
 	- metricInfo     
 	- textUTF8       
