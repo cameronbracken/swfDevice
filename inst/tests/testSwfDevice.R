@@ -55,6 +55,24 @@ tests <- list(
 		ani.options(interval = 0.001)
 		mwar.ani(lty.rect = 3, pch = 21, col = "red", bg = "yellow",type='o')
 		
+	},
+	
+	function(main){
+		
+		plot(12:1,1:12,type='n',xlim=c(0,12),ylim=c(0,12))
+		text(1,12,"serif normal",font=1,family='serif')
+		text(2,11,"serif bold",font=2,family='serif')
+		text(3,10,"serif italic",font=3,family='serif')
+		text(4,9,"serif bold italic",font=4,family='serif')
+		text(5,8,"sans normal",font=1,family='sans')
+		text(6,7,"sans bold",font=2,family='sans')
+		text(7,6,"sans italic",font=3,family='sans')
+		text(8,5,"sans bold italic",font=4,family='sans')
+		text(9,4,"mono normal",font=1,family='mono')
+		text(10,3,"mono bold",font=2,family='mono')
+		text(11,2,"mono italic",font=3,family='mono')
+		text(12,1,"mono bold italic",font=4,family='mono')
+		
 	}
 	
 )
