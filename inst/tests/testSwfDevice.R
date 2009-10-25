@@ -75,6 +75,12 @@ tests <- list(
 		text(11,2,"mono italic",font=3,family='mono')
 		text(12,1,"mono bold italic",font=4,family='mono')
 		
+	},
+	
+	function(main){
+		
+		plot(c(0,1),c(0,1),type='o',lty=2)
+		
 	}
 	
 )
@@ -84,7 +90,7 @@ for( i in 1:length(tests)){
 	n <- sprintf('%02d',i)
 	cat('Running Test', n ,'\n')
 	name <- paste('swfDevice_test',n,'.swf',sep='')
-	swf(name,frameRate=5)
+	swf(name,frameRate=1)
 	tests[[i]]( name )
 	dev.off()
 	#possibly generate gallery here
