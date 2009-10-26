@@ -630,7 +630,8 @@ static double SWF_StrWidth( const char *str,
 	SWFText text_object = newSWFText();
 	
 	// Tell the text object to use the font previously loaded
-	SWFText_setFont(text_object, swfInfo->ss);
+	SWFText_setFont(text_object,
+		selectFont(plotParams->fontface, plotParams->fontfamily, swfInfo));
 	
 	// Set the height of the text
 	SWFText_setHeight(text_object, plotParams->ps * plotParams->cex);
@@ -1144,10 +1145,10 @@ static void SWF_LoadFont(const char *fontFile){
 	
 }
 
+	//Return the preloaded font object corresponding to the given face and family
 static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfInfo){
 	
 	SWFFont font;
-	
 	switch(fontface){
 		
 		case 1: //plain
@@ -1157,6 +1158,8 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 				font = swfInfo->ss;
 			if(strcmp(fontfamily, "mono"))
 				font = swfInfo->mo;
+			if(strcmp(fontfamily, ""))
+				font = swfInfo->ss;
 			break;
 		case 2: //bold
 			if(strcmp(fontfamily, "serif"))
@@ -1165,6 +1168,8 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 				font = swfInfo->ss_b;
 			if(strcmp(fontfamily, "mono"))
 				font = swfInfo->mo_b;
+			if(strcmp(fontfamily, ""))
+				font = swfInfo->ss_b;
 			break;
 		case 3: //italic
 			if(strcmp(fontfamily, "serif"))
@@ -1173,6 +1178,8 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 				font = swfInfo->ss_i;
 			if(strcmp(fontfamily, "mono"))
 				font = swfInfo->mo_i;
+			if(strcmp(fontfamily, ""))
+				font = swfInfo->ss_i;
 			break;
 		case 4:
 			//bold italic
@@ -1182,6 +1189,8 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 				font = swfInfo->ss_b_i;
 			if(strcmp(fontfamily, "mono"))
 				font = swfInfo->mo_b_i;
+			if(strcmp(fontfamily, ""))
+				font = swfInfo->ss_b_i;
 			break;
 		case 5:
 			//symbol font (not supported)
