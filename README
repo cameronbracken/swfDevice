@@ -21,8 +21,7 @@ __Todo__
 	- wantSymbolUTF8: ditto 
 	- useRotatedTextInContour: ditto 
 * Implement remaining graphics parameters, especially fill! 
-	- gamma
-	- lty   <----- Most important    
+	- gamma  
 	- lend
 	- ljoin
 	- lmitre
@@ -44,3 +43,4 @@ __Planned Features__
 	- Customizable at the R level 
 * R Bindings to the ming library (will this really be useful?)
 	- Control subset of parameters at the R level
+* Option to wrap swf in html output

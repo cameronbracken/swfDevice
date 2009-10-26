@@ -190,8 +190,8 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	/*Initilize the SWF movie version 8 so more line styles can be used*/
 	swfInfo->m = newSWFMovieWithVersion(8);
 	
-	const char *ss = CHAR(asChar(getListElement(fontFileList,"ss")));
-	Rprintf("%s\n",ss);
+	//const char *ss = CHAR(asChar(getListElement(fontFileList,"ss")));
+	//Rprintf("%s\n",ss);
 	swfInfo->ss = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss"))));
 	swfInfo->ss_b = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_b"))));
 	swfInfo->ss_i = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_i"))));
@@ -240,10 +240,9 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	/*
 	 * useRotatedTextInContour specifies if the text function along with
 	 * rotation parameters should be used over Hershey fonts when printing
-	 * contour plot labels. As one of the primary goals of this device
-	 * is to unify font choices, this value is set to true.
+	 * contour plot labels.
 	*/
-	deviceInfo->useRotatedTextInContour = FALSE; 
+	deviceInfo->useRotatedTextInContour = TRUE; 
 
 	/*
 	 * canClip specifies whether the device implements routines for filtering
@@ -631,7 +630,7 @@ static double SWF_StrWidth( const char *str,
 	
 	if( swfInfo->debug == TRUE ){
 		fprintf(swfInfo->logFile,
-			"SWF_StrWidth: Calculated Width of \"%s\" as ",str);
+			"SWF_StrWidth: ");
 		fflush(swfInfo->logFile);
 	}
 	
@@ -644,11 +643,11 @@ static double SWF_StrWidth( const char *str,
 	// Set the height of the text
 	SWFText_setHeight(text_object, plotParams->ps * plotParams->cex);
 	
-	
 	float width = SWFText_getStringWidth(text_object, str);
 	
 	if( swfInfo->debug == TRUE ){
-		fprintf(swfInfo->logFile, "%7.2f\n", width);
+		fprintf(swfInfo->logFile,
+			"Calculated Width of \"%s\" as %7.2f\n", str, width);
 		fflush(swfInfo->logFile);
 	}
 	
@@ -1285,52 +1284,49 @@ static void SWF_LoadFont(const char *fontFile){
 static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfInfo){
 	
 	SWFFont font;
+	//Rprintf("%s",fontfamily);
 	switch(fontface){
 		
 		case 1: //plain
-			if(strcmp(fontfamily, "serif")){
+			if(strcmp(fontfamily, "serif"))
 				font = swfInfo->se;
-			}else if(strcmp(fontfamily, "sans")){
-				font = swfInfo->ss;
-			}else if(strcmp(fontfamily, "mono")){
+			if(strcmp(fontfamily, "mono"))
 				font = swfInfo->mo;
-			}else if(strcmp(fontfamily, "")){
+			if(strcmp(fontfamily, "sans"))
 				font = swfInfo->ss;
-			}
+			if(strcmp(fontfamily, ""))
+				font = swfInfo->ss;
 			break;
 		case 2: //bold
-			if(strcmp(fontfamily, "serif")){
+			if(strcmp(fontfamily, "serif"))
 				font = swfInfo->se_b;
-			}else if(strcmp(fontfamily, "sans")){
-				font = swfInfo->ss_b;
-			}else if(strcmp(fontfamily, "mono")){
+			if(strcmp(fontfamily, "mono"))
 				font = swfInfo->mo_b;
-			}else if(strcmp(fontfamily, "")){
+			if(strcmp(fontfamily, "sans"))
 				font = swfInfo->ss_b;
-			}
+			if(strcmp(fontfamily, ""))
+				font = swfInfo->ss_b;
 			break;
 		case 3: //italic
-			if(strcmp(fontfamily, "serif")){
+			if(strcmp(fontfamily, "serif"))
 				font = swfInfo->se_i;
-			}else if(strcmp(fontfamily, "sans")){
-				font = swfInfo->ss_i;
-			}else if(strcmp(fontfamily, "mono")){
+			if(strcmp(fontfamily, "mono"))
 				font = swfInfo->mo_i;
-			}else if(strcmp(fontfamily, "")){
+			if(strcmp(fontfamily, "sans"))
 				font = swfInfo->ss_i;
-			}
+			if(strcmp(fontfamily, ""))
+				font = swfInfo->ss_i;
 			break;
 		case 4:
 			//bold italic
-			if(strcmp(fontfamily, "serif")){
+			if(strcmp(fontfamily, "serif"))
 				font = swfInfo->se_b_i;
-			}else if(strcmp(fontfamily, "sans")){
-				font = swfInfo->ss_b_i;
-			}else if(strcmp(fontfamily, "mono")){
+			if(strcmp(fontfamily, "mono"))
 				font = swfInfo->mo_b_i;
-			}else if(strcmp(fontfamily, "")){
+			if(strcmp(fontfamily, "sans"))
 				font = swfInfo->ss_b_i;
-			}
+			if(strcmp(fontfamily, ""))
+				font = swfInfo->ss_b_i;
 			break;
 		case 5:
 			//symbol font (not supported)

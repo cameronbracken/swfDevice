@@ -50,10 +50,12 @@ function(file = "Rplots.swf", width = 7, height = 7, bg = "white",
 		)
 	}
 	
-	message(paste('Loading',fontFiles,collapse='\n'))
+	#message(paste('Loading',fontFiles,collapse='\n'))
 		
     .External('swfDevice', file, width, height, bg, fg, 
 		frameRate, fontFiles ,PACKAGE='swfDevice')
 	invisible()
 	
 }
+
+

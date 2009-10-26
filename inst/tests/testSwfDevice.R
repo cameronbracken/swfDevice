@@ -90,7 +90,7 @@ for( i in 1:length(tests)){
 	n <- sprintf('%02d',i)
 	cat('Running Test', n ,'\n')
 	name <- paste('swfDevice_test',n,'.swf',sep='')
-	swf(name,frameRate=1,ttf='vera')
+	swf(name,frameRate=1)
 	tests[[i]]( name )
 	dev.off()
 	#possibly generate gallery here
