@@ -289,7 +289,7 @@ for( i in 1:length(tests)){
 	swf(name,frameRate=1)
 	tests[[i]]( name )
 	dev.off()
-	png(pngname,type='cairo')
+	png(pngname,type='cairo',width=7,height=7,units='in',res=300)
 	tests[[i]]( name )
 	dev.off()
 	#possibly generate gallery here
