@@ -27,11 +27,11 @@
 // We are writing to files so we need stdio.h
 #include <stdio.h>
 #include <stdlib.h>
+//For pow()
+#include <math.h>
 
 #include "swfDevice.h"
 #define DEBUG TRUE
-#define BUFSIZE 512
-
 
 SEXP swfDevice ( SEXP args ){
 
@@ -185,7 +185,7 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	strcpy( swfInfo->outFileName, fileName);
 	swfInfo->debug = DEBUG;
 	swfInfo->nFrames = 0;
-	swfInfo->frameRate = 0;
+	swfInfo->frameRate = frameRate;
 	swfInfo->polyLine = FALSE;
 	/*Initilize the SWF movie version 8 so more line styles can be used*/
 	swfInfo->m = newSWFMovieWithVersion(8);
@@ -399,7 +399,7 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 			R_BLUE(deviceInfo->startfill));
 			
 		fflush(swfInfo->logFile);
-		
+		//Rprintf("%s",dashTo);
 	}
 
 	// Set the background color for the movie
@@ -482,17 +482,25 @@ static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
 		fflush(swfInfo->logFile);
 	}
 	
-	/*
-	 * Add a new frame to the current movie.
-	 * This function adds a new frame to the current movie. All items added, removed
-	 * manipulated effect this frame and probably following frames.
-	 */
 	if(!(swfInfo->nFrames == 0)){
+		/*
+		 * Add a new frame to the current movie.
+		 * This function adds a new frame to the current movie. All items added, removed
+		 * manipulated effect this frame and probably following frames.
+		 */
 		SWFMovie_nextFrame( swfInfo->m );
 		
-		//Wipe the slate clean 
-		// nextFrame draws all the ojects and then advances the frame
-		// so remove all the objects in the display list and start over
+		/*Wipe the slate clean:
+		 * nextFrame draws all the ojects and then advances the frame
+		 * so remove all the objects in the display list and start over.
+		 * 
+		 * This addresses a difference in the drawing model of Ming and 
+		 * R.  Ming wants to set up objects, save them and move them around 
+		 * later which makes sense in flash.  It assumes you want to keep 
+		 * those objects in the next frame. R wants to draw a shape and 
+		 * forget about it.  Hence the voodoo with the linked list and 
+		 * storing the display items in the current frame. 
+		*/
 		while (swfInfo->displayListHead) {
 			swfInfo->displayListTail = swfInfo->displayListHead->next;
 			SWFDisplayItem_remove(swfInfo->displayListHead->d);
@@ -736,12 +744,15 @@ static void SWF_Line( double x1, double y1,
 	y1 = deviceInfo->top - y1;
 	y2 = deviceInfo->top - y2;
 	
+	
 	SWFShape_movePenTo(line, x1, y1);
 	
 	if( plotParams->col != R_RGBA(255, 255, 255, 0) )
 		SWF_SetLineStyle(line, plotParams, swfInfo);
-		
-	SWFShape_drawLineTo(line, x2, y2);
+	
+	//Respect lty	
+	SWF_drawStyledLineTo(line, x2, y2, plotParams->lty);
+	
 
 	SWFDisplayItem lined = SWFMovie_add(swfInfo->m, (SWFBlock) line);
 	
@@ -861,10 +872,10 @@ static void SWF_Rectangle( double x0, double y0,
 	SWFShape_movePenTo(rectangle, x0, y0);
 
 	/* Draw the four line segments on the rectangle */
-	SWFShape_drawLineTo(rectangle, x0, y1);
-	SWFShape_drawLineTo(rectangle, x1, y1);
-	SWFShape_drawLineTo(rectangle, x1, y0);
-	SWFShape_drawLineTo(rectangle, x0, y0);	
+	SWF_drawStyledLineTo(rectangle, x0, y1, plotParams->lty);
+	SWF_drawStyledLineTo(rectangle, x1, y1, plotParams->lty);
+	SWF_drawStyledLineTo(rectangle, x1, y0, plotParams->lty);
+	SWF_drawStyledLineTo(rectangle, x0, y0, plotParams->lty);
 
 	SWFDisplayItem rectangled = SWFMovie_add(swfInfo->m, (SWFBlock) rectangle);
 	
@@ -917,7 +928,7 @@ static void SWF_Polyline( int n, double *x, double *y,
 		/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
 		y[i] = deviceInfo->top - y[i];
 		
-		SWFShape_drawLineTo(line, x[i], y[i]);	
+		SWF_drawStyledLineTo(line, x[i], y[i], plotParams->lty);	
 		
 		if( swfInfo->debug == TRUE )
 			fprintf(swfInfo->logFile,
@@ -975,7 +986,7 @@ static void SWF_Polygon( int n, double *x, double *y,
 		/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
 		y[0] = deviceInfo->top - y[0];
 		
-		SWFShape_drawLineTo(line, x[i], y[i]);	
+		SWF_drawStyledLineTo(line, x[i], y[i], plotParams->lty);	
 	}
 		
 	SWFDisplayItem polyd = SWFMovie_add(swfInfo->m, (SWFBlock) line);
@@ -1094,6 +1105,104 @@ static void addToDisplayList(SWFDisplayItem item){
 	swfInfo->displayListTail = newItem; 
 	newItem->next = NULL;
 	
+}
+
+static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty)
+{
+	byte dashlist[8];
+	int i, nlty;
+	
+	/* From ?par
+	 * Line types can either be specified by giving an index into a small 
+	 * built-in table of line types (1 = solid, 2 = dashed, etc, see lty 
+	 * above) or directly as the lengths of on/off stretches of line. This 
+	 * is done with a string of an even number (up to eight) of characters, 
+	 * namely non-zero (hexadecimal) digits which give the lengths in 
+	 * consecutive positions in the string. For example, the string "33" 
+	 * specifies three units on followed by three off and "3313" specifies 
+	 * three units on followed by three off followed by one on and finally 
+	 * three off. The ‘units’ here are (on most devices) proportional to lwd, 
+	 * and with lwd = 1 are in pixels or points or 1/96 inch.
+
+	 * The five standard dash-dot line types (lty = 2:6) correspond to 
+	 * c("44", "13", "1343", "73", "2262").
+	 * 
+	 * (0=blank, 1=solid (default), 2=dashed, 
+	 *  3=dotted, 4=dotdash, 5=longdash, 6=twodash) 
+	*/
+	
+	/*Retrieve the line type pattern*/
+	for(i = 0; i < 8 && lty & 15 ; i++) {
+		dashlist[i] = lty & 15;
+		lty = lty >> 4;
+	}
+	nlty = i; i = 0;
+	
+	if(nlty == 0){
+		SWFShape_drawLineTo(line, x2, y2);
+		return;
+	}
+	
+		/* Do the drawing of dashed line manually
+		 * this is very sucky, it sould be done for me
+		 * In my opinion, this is a huge limitation of libming.
+		 *
+		 * 1. Calculate end point of dash segment
+		 * 2a. If past end point of line, draw to end of line, end
+		 * 2b. Otherwise draw to end point of dash segment
+		 * 3. Repeat
+		 */
+		
+		//Current position
+	double x1 = SWFShape_getPenX(line);
+	double y1 = SWFShape_getPenY(line);
+		//end of dash segment
+	double x3, y3, ang = atan((y2-y1)/(x2-x1));
+		//distance to end of dash segment and end of line
+	double d_dash, d_line = 10000, old_d_line;
+	Rboolean my_break = FALSE;
+	
+	while( my_break == FALSE ){
+		while(i < nlty){
+			//Rprintf("INNER LOOP\n");
+			x3 = x1 + (double)dashlist[i] * cos(ang);
+			y3 = y1 + (double)dashlist[i] * sin(ang);
+			
+			old_d_line = d_line;
+			d_line = sqrt(pow(x2-x1,2)+pow(y2-y1,2));
+			d_dash = sqrt(pow(x3-x1,2)+pow(y3-y1,2));
+
+			//Rprintf("i=%d nlty=%d\n",i,nlty);
+			//Rprintf("x1=%f x2=%f x3=%f\n",x1,x2,x3);
+			//Rprintf("y1=%f y2=%f y3=%f\n",y1,y2,x3);
+			//Rprintf("ang=%f\n",ang);
+			//Rprintf("d_dash=%f\n",d_dash);
+			//Rprintf("d_line=%f\n",d_line);
+			//Rprintf("old_d_line=%f\n",old_d_line);
+			
+			if( (d_dash >= d_line) || (old_d_line < d_line) ){
+				//Rprintf("%s\n\n\n","Time to break");
+				if( (i % 2) == 0 ){
+					SWFShape_drawLineTo(line, x2, y2);
+				}else{
+					SWFShape_movePenTo(line, x2, y2);
+				}
+				my_break = TRUE; //out of main loop
+				break; //out of inner loop
+			}
+				
+			if( (i % 2) == 0 ){
+				SWFShape_drawLineTo(line, x3, y3);
+			}else{
+				SWFShape_movePenTo(line, x3, y3);
+			}
+			// Update coordinates
+			x1 = x3; y1 = y3; 
+			i++;
+		}
+		i = 0;
+	}
+		
 }
 
 /**

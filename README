@@ -22,7 +22,7 @@ __Todo__
 	- useRotatedTextInContour: ditto 
 * Implement remaining graphics parameters, especially fill! 
 	- gamma
-	- lty       
+	- lty   <----- Most important    
 	- lend
 	- ljoin
 	- lmitre
