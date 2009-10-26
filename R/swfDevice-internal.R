@@ -1,5 +1,5 @@
 swfSetup <- function(){
 	
-	.C('Ming_init' ,package='swfDevice')
+	.C('Ming_init' ,PACKAGE='swfDevice')
 	
 }
