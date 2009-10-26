@@ -1155,7 +1155,9 @@ static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty)
 		
 		//Current position
 	double x1 = SWFShape_getPenX(line);
+	//double y1 = GEcurrentDevice()->dev->top - SWFShape_getPenY(line);
 	double y1 = SWFShape_getPenY(line);
+	
 		//end of dash segment
 	double x3, y3, ang = atan((y2-y1)/(x2-x1));
 		//distance to end of dash segment and end of line
@@ -1165,12 +1167,28 @@ static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty)
 	while( my_break == FALSE ){
 		while(i < nlty){
 			//Rprintf("INNER LOOP\n");
-			x3 = x1 + (double)dashlist[i] * cos(ang);
-			y3 = y1 + (double)dashlist[i] * sin(ang);
+			/*
+			if(x2 < x1)
+				x3 = x1 - (double)dashlist[i] * cos(ang);
+			else
+				x3 = x1 + (double)dashlist[i] * cos(ang);
+			if(y2 < y1)
+				y3 = y1 - (double)dashlist[i] * sin(ang);
+			else
+				y3 = y1 + (double)dashlist[i] * sin(ang);
+			*/
+			
+			//if(abs(ang) < 0.01){
+			//	x3 = x1 - (double)dashlist[i] * cos(ang);
+			//	y3 = y1 - (double)dashlist[i] * sin(ang);
+			//}else{
+				x3 = x1 + (double)dashlist[i] * cos(ang);
+				y3 = y1 + (double)dashlist[i] * sin(ang);
+			//}
 			
 			old_d_line = d_line;
-			d_line = sqrt(pow(x2-x1,2)+pow(y2-y1,2));
-			d_dash = sqrt(pow(x3-x1,2)+pow(y3-y1,2));
+			d_line = sqrt(pow(abs(x2-x1),2)+pow(abs(y2-y1),2));
+			d_dash = sqrt(pow(abs(x3-x1),2)+pow(abs(y3-y1),2));
 
 			//Rprintf("i=%d nlty=%d\n",i,nlty);
 			//Rprintf("x1=%f x2=%f x3=%f\n",x1,x2,x3);
@@ -1180,7 +1198,7 @@ static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty)
 			//Rprintf("d_line=%f\n",d_line);
 			//Rprintf("old_d_line=%f\n",old_d_line);
 			
-			if( (d_dash >= d_line) || (old_d_line < d_line) ){
+			if( (d_dash >= d_line) || old_d_line < d_line ){
 				//Rprintf("%s\n\n\n","Time to break");
 				if( (i % 2) == 0 ){
 					SWFShape_drawLineTo(line, x2, y2);
@@ -1193,8 +1211,12 @@ static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty)
 				
 			if( (i % 2) == 0 ){
 				SWFShape_drawLineTo(line, x3, y3);
+				//Rprintf("\tSegment from (%6.1f, %6.1f) to (%6.1f, %6.1f) \n",
+				//		x1, y1, x3, y3);
 			}else{
 				SWFShape_movePenTo(line, x3, y3);
+				//Rprintf("\tMove pen from (%6.1f, %6.1f) to (%6.1f, %6.1f) \n",
+				//	x1, y1, x3, y3);
 			}
 			// Update coordinates
 			x1 = x3; y1 = y3; 
@@ -1266,7 +1288,7 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 			if(strcmp(fontfamily, "sans"))
 				font = swfInfo->ss;
 			if(strcmp(fontfamily, "mono"))
-				font = swfInfo->mo;
+				font = swfInfo->ss;
 			if(strcmp(fontfamily, ""))
 				font = swfInfo->ss;
 			break;
@@ -1276,7 +1298,7 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 			if(strcmp(fontfamily, "sans"))
 				font = swfInfo->ss_b;
 			if(strcmp(fontfamily, "mono"))
-				font = swfInfo->mo_b;
+				font = swfInfo->ss_b;
 			if(strcmp(fontfamily, ""))
 				font = swfInfo->ss_b;
 			break;
@@ -1286,7 +1308,7 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 			if(strcmp(fontfamily, "sans"))
 				font = swfInfo->ss_i;
 			if(strcmp(fontfamily, "mono"))
-				font = swfInfo->mo_i;
+				font = swfInfo->ss_i;
 			if(strcmp(fontfamily, ""))
 				font = swfInfo->ss_i;
 			break;
@@ -1297,7 +1319,7 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 			if(strcmp(fontfamily, "sans"))
 				font = swfInfo->ss_b_i;
 			if(strcmp(fontfamily, "mono"))
-				font = swfInfo->mo_b_i;
+				font = swfInfo->ss_b_i;
 			if(strcmp(fontfamily, ""))
 				font = swfInfo->ss_b_i;
 			break;
