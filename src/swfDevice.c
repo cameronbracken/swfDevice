@@ -190,8 +190,8 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	/*Initilize the SWF movie version 8 so more line styles can be used*/
 	swfInfo->m = newSWFMovieWithVersion(8);
 	
-	//const char *ss = CHAR(asChar(getListElement(fontFileList,"ss")));
-	//Rprintf("%s\n",ss);
+	const char *ss = CHAR(asChar(getListElement(fontFileList,"ss")));
+	Rprintf("%s\n",ss);
 	swfInfo->ss = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss"))));
 	swfInfo->ss_b = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_b"))));
 	swfInfo->ss_i = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_i"))));
@@ -631,7 +631,7 @@ static double SWF_StrWidth( const char *str,
 	
 	if( swfInfo->debug == TRUE ){
 		fprintf(swfInfo->logFile,
-			"SWF_StrWidth: ");
+			"SWF_StrWidth: Calculated Width of \"%s\" as ",str);
 		fflush(swfInfo->logFile);
 	}
 	
@@ -644,11 +644,11 @@ static double SWF_StrWidth( const char *str,
 	// Set the height of the text
 	SWFText_setHeight(text_object, plotParams->ps * plotParams->cex);
 	
+	
 	float width = SWFText_getStringWidth(text_object, str);
 	
 	if( swfInfo->debug == TRUE ){
-		fprintf(swfInfo->logFile,
-			"Calculated Width of \"%s\" as %7.2f\n", str, width);
+		fprintf(swfInfo->logFile, "%7.2f\n", width);
 		fflush(swfInfo->logFile);
 	}
 	
@@ -1288,45 +1288,49 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 	switch(fontface){
 		
 		case 1: //plain
-			if(strcmp(fontfamily, "serif"))
+			if(strcmp(fontfamily, "serif")){
 				font = swfInfo->se;
-			if(strcmp(fontfamily, "sans"))
+			}else if(strcmp(fontfamily, "sans")){
 				font = swfInfo->ss;
-			if(strcmp(fontfamily, "mono"))
+			}else if(strcmp(fontfamily, "mono")){
+				font = swfInfo->mo;
+			}else if(strcmp(fontfamily, "")){
 				font = swfInfo->ss;
-			if(strcmp(fontfamily, ""))
-				font = swfInfo->ss;
+			}
 			break;
 		case 2: //bold
-			if(strcmp(fontfamily, "serif"))
+			if(strcmp(fontfamily, "serif")){
 				font = swfInfo->se_b;
-			if(strcmp(fontfamily, "sans"))
+			}else if(strcmp(fontfamily, "sans")){
 				font = swfInfo->ss_b;
-			if(strcmp(fontfamily, "mono"))
+			}else if(strcmp(fontfamily, "mono")){
+				font = swfInfo->mo_b;
+			}else if(strcmp(fontfamily, "")){
 				font = swfInfo->ss_b;
-			if(strcmp(fontfamily, ""))
-				font = swfInfo->ss_b;
+			}
 			break;
 		case 3: //italic
-			if(strcmp(fontfamily, "serif"))
+			if(strcmp(fontfamily, "serif")){
 				font = swfInfo->se_i;
-			if(strcmp(fontfamily, "sans"))
+			}else if(strcmp(fontfamily, "sans")){
 				font = swfInfo->ss_i;
-			if(strcmp(fontfamily, "mono"))
+			}else if(strcmp(fontfamily, "mono")){
+				font = swfInfo->mo_i;
+			}else if(strcmp(fontfamily, "")){
 				font = swfInfo->ss_i;
-			if(strcmp(fontfamily, ""))
-				font = swfInfo->ss_i;
+			}
 			break;
 		case 4:
 			//bold italic
-			if(strcmp(fontfamily, "serif"))
+			if(strcmp(fontfamily, "serif")){
 				font = swfInfo->se_b_i;
-			if(strcmp(fontfamily, "sans"))
+			}else if(strcmp(fontfamily, "sans")){
 				font = swfInfo->ss_b_i;
-			if(strcmp(fontfamily, "mono"))
+			}else if(strcmp(fontfamily, "mono")){
+				font = swfInfo->mo_b_i;
+			}else if(strcmp(fontfamily, "")){
 				font = swfInfo->ss_b_i;
-			if(strcmp(fontfamily, ""))
-				font = swfInfo->ss_b_i;
+			}
 			break;
 		case 5:
 			//symbol font (not supported)

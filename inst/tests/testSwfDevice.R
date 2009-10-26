@@ -32,12 +32,9 @@ tests <- list(
 
 		plot(1,1, xlim=c(0,10), ylim=c(0,10), main=main)
 
-		legend( x='top', title='Legend Test', legend=c('Hello, world!'), inset=0.05 )
+		legend( x='top', title='Legend Test', legend=c('Hello'), inset=0.05 )
 
 		legend( 6, 4, title='Another Legend Test', legend=c('Test 1','Test 2'), pch=c(1,16))
-		plot(1)
-		plot(1:10)
-		plot(1:10)
 
 	},
 	
@@ -93,7 +90,7 @@ for( i in 1:length(tests)){
 	n <- sprintf('%02d',i)
 	cat('Running Test', n ,'\n')
 	name <- paste('swfDevice_test',n,'.swf',sep='')
-	swf(name,frameRate=1)
+	swf(name,frameRate=1,ttf='vera')
 	tests[[i]]( name )
 	dev.off()
 	#possibly generate gallery here
