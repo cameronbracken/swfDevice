@@ -79,7 +79,10 @@ tests <- list(
 	
 	function(main){
 		
-		plot(c(0,1),c(0,1),type='o',lty=2)
+		plot(c(0,1),c(0,1),type='o',lty=2,xlim=c(0,2),ylim=c(0,2))
+		lines(c(2,1),c(2,1),type='o',lty=2)
+		lines(c(0,1),c(1,0),type='o',lty=2)
+		lines(c(2,1),c(1,2),type='o',lty=2)
 		
 	}
 	

@@ -9,7 +9,7 @@ function(file = "Rplots.swf", width = 7, height = 7, bg = "white",
 		'VeraMoBd.ttf', 'VeraMoIt.ttf', 'VeraMoBI.ttf', 'VeraSe.ttf',
 		'VeraSeBd.ttf','VeraSe.ttf','VeraSeBd.ttf')
 	if(is.null(fontFiles)){
-		files <- system.file('fonts','ttf-bitstream-vera-1.10',
+		files <- system.file('fonts','vera',
 			fonts,package='swfDevice')
 		fontFiles <- list(
 			ss = files[1],
