@@ -1107,7 +1107,7 @@ static void addToDisplayList(SWFDisplayItem item){
 	
 }
 
-static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty)
+static void SWF_drawStyledLineTo(SWFShape line, double x_end, double y_end, int lty)
 {
 	byte dashlist[8];
 	int i, nlty;
@@ -1139,7 +1139,7 @@ static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty)
 	nlty = i; i = 0;
 	
 	if(nlty == 0){
-		SWFShape_drawLineTo(line, x2, y2);
+		SWFShape_drawLineTo(line, x_end, y_end);
 		return;
 	}
 	
@@ -1154,45 +1154,52 @@ static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty)
 		 */
 		
 		//Current position
-	double x1 = SWFShape_getPenX(line);
+	double x_cur = SWFShape_getPenX(line);
 	//double y1 = GEcurrentDevice()->dev->top - SWFShape_getPenY(line);
-	double y1 = SWFShape_getPenY(line);
+	double y_cur = SWFShape_getPenY(line);
 	
 		//end of dash segment
-	double x3, y3, ang = atan((y2-y1)/(x2-x1));
+	double x_next, y_next, ang = atan((y_end-y_cur)/(x_end-x_cur));
 		//distance to end of dash segment and end of line
 	double d_dash, d_line = 10000, old_d_line;
 	Rboolean my_break = FALSE;
 	
+	//Rprintf("x_cur=%f x_end=%f\n",x_cur,x_end);
+	//Rprintf("y_cur=%f y_end=%f\n",y_cur,y_end);
+	
 	while( my_break == FALSE ){
 		while(i < nlty){
 			//Rprintf("INNER LOOP\n");
-			/*
-			if(x2 < x1)
-				x3 = x1 - (double)dashlist[i] * cos(ang);
-			else
-				x3 = x1 + (double)dashlist[i] * cos(ang);
-			if(y2 < y1)
-				y3 = y1 - (double)dashlist[i] * sin(ang);
-			else
-				y3 = y1 + (double)dashlist[i] * sin(ang);
-			*/
 			
-			//if(abs(ang) < 0.01){
-			//	x3 = x1 - (double)dashlist[i] * cos(ang);
-			//	y3 = y1 - (double)dashlist[i] * sin(ang);
-			//}else{
-				x3 = x1 + (double)dashlist[i] * cos(ang);
-				y3 = y1 + (double)dashlist[i] * sin(ang);
-			//}
+			/*
+			 * This part is so whacked out, basically the different origins of 
+			 * R and ming make drawing dashed lines REALLY confusing. This 
+			 * seems to work. ;)
+			*/
+			if(x_end < x_cur && y_end < y_cur){
+				x_next = x_cur - (double)dashlist[i] * cos(ang);
+				y_next = y_cur - (double)dashlist[i] * sin(ang);
+			}
+			if(x_end > x_cur && y_end < y_cur){
+				x_next = x_cur + (double)dashlist[i] * cos(ang);
+				y_next = y_cur + (double)dashlist[i] * sin(ang);
+			}
+			if(x_end < x_cur && y_end > y_cur){
+				x_next = x_cur - (double)dashlist[i] * cos(ang);
+				y_next = y_cur - (double)dashlist[i] * sin(ang);
+			}
+			if(x_end > x_cur && y_end > y_cur){
+				x_next = x_cur + (double)dashlist[i] * cos(ang);
+				y_next = y_cur + (double)dashlist[i] * sin(ang);
+			}
 			
 			old_d_line = d_line;
-			d_line = sqrt(pow(abs(x2-x1),2)+pow(abs(y2-y1),2));
-			d_dash = sqrt(pow(abs(x3-x1),2)+pow(abs(y3-y1),2));
+			d_line = sqrt(pow(abs(x_end-x_cur),2)+pow(abs(y_end-y_cur),2));
+			d_dash = sqrt(pow(abs(x_next-x_cur),2)+pow(abs(y_next-y_cur),2));
 
 			//Rprintf("i=%d nlty=%d\n",i,nlty);
-			//Rprintf("x1=%f x2=%f x3=%f\n",x1,x2,x3);
-			//Rprintf("y1=%f y2=%f y3=%f\n",y1,y2,x3);
+			//Rprintf("x_cur=%f x_end=%f x_next=%f\n",x_cur,x_end,x_next);
+			//Rprintf("y_cur=%f y_end=%f y_next=%f\n",y_cur,y_end,x_next);
 			//Rprintf("ang=%f\n",ang);
 			//Rprintf("d_dash=%f\n",d_dash);
 			//Rprintf("d_line=%f\n",d_line);
@@ -1201,25 +1208,23 @@ static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty)
 			if( (d_dash >= d_line) || old_d_line < d_line ){
 				//Rprintf("%s\n\n\n","Time to break");
 				if( (i % 2) == 0 ){
-					SWFShape_drawLineTo(line, x2, y2);
+						//draw to the end of the line segment
+					SWFShape_drawLineTo(line, x_end, y_end);
 				}else{
-					SWFShape_movePenTo(line, x2, y2);
+					SWFShape_movePenTo(line, x_end, y_end);
 				}
 				my_break = TRUE; //out of main loop
 				break; //out of inner loop
 			}
 				
 			if( (i % 2) == 0 ){
-				SWFShape_drawLineTo(line, x3, y3);
-				//Rprintf("\tSegment from (%6.1f, %6.1f) to (%6.1f, %6.1f) \n",
-				//		x1, y1, x3, y3);
+					//draw to the end point of the dash segment
+				SWFShape_drawLineTo(line, x_next, y_next);
 			}else{
-				SWFShape_movePenTo(line, x3, y3);
-				//Rprintf("\tMove pen from (%6.1f, %6.1f) to (%6.1f, %6.1f) \n",
-				//	x1, y1, x3, y3);
+				SWFShape_movePenTo(line, x_next, y_next);
 			}
 			// Update coordinates
-			x1 = x3; y1 = y3; 
+			x_cur = x_next; y_cur = y_next; 
 			i++;
 		}
 		i = 0;

@@ -98,6 +98,6 @@ static void SWF_Init();
 static void addToDisplayList(SWFDisplayItem item);
 static R_INLINE SEXP getListElement(SEXP list, char *nm);
 static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfInfo);
-static void SWF_drawStyledLineTo(SWFShape line, double x2, double y2, int lty);
+static void SWF_drawStyledLineTo(SWFShape line, double x_end, double y_end, int lty);
 
 #endif // End of Once Only header
