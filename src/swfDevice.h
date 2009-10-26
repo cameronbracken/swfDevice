@@ -6,9 +6,11 @@
 #define R_USE_PROTOTYPES 1
 
 #include <R.h>
+#include <Rdefines.h>
 #include <Rinternals.h>
 #include <R_ext/GraphicsEngine.h>
 
+/* Linked list containing list of displayed items fro each frame*/
 typedef struct display_list DisplayList;
 
 struct display_list { 
@@ -21,7 +23,18 @@ typedef struct swfDevDesc{
 	char outFileName[512];
 	Rboolean debug;
 	SWFMovie m;
-	SWFFont font;
+	SWFFont ss;     // sans serif 
+	SWFFont ss_b;   // sans serif bold
+	SWFFont ss_i;   // sans serif italic
+	SWFFont ss_b_i; // sans serif bold italic
+	SWFFont mo;      // mono
+	SWFFont mo_b;    // mono bold
+	SWFFont mo_i;    // mono italic
+	SWFFont mo_b_i;  // mono bold italic
+	SWFFont se;      // serif
+	SWFFont se_b;    // serif bold
+	SWFFont se_i;    // serif itlic
+	SWFFont se_b_i;    // serif bold italic
 	int nFrames;
 	double frameRate;
 	Rboolean polyLine;
@@ -33,7 +46,7 @@ typedef struct swfDevDesc{
 
 static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	double width, double height, const char *bg, const char *fg, 
-	double frameRate, const char *fontFile );
+	double frameRate, SEXP fontFileList );
 
 double dim2dev( double length );
 
@@ -83,5 +96,7 @@ static void SWF_SetFill(SWFShape shape, const pGEcontext plotParams, swfDevDesc 
 static void SWF_LoadFont(const char *fontFile);
 static void SWF_Init();
 static void addToDisplayList(SWFDisplayItem item);
+static R_INLINE SEXP getListElement(SEXP list, char *nm);
+static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfInfo);
 
 #endif // End of Once Only header
