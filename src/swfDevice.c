@@ -173,7 +173,7 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
   */	
 	if( !( plotParams = (pGEcontext) malloc(sizeof(pGEcontext)) ) )
 		return FALSE;
-
+		
 	/* 
 	 * Initialize swfInfo, return false if this fails. A false return
 	 * value will cause the whole device initialization routine to fail.
@@ -253,7 +253,7 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	 * output file by not printing objects that fall outside the plot 
 	 * boundaries. 
 	*/
-	deviceInfo->canClip = FALSE;
+	deviceInfo->canClip = TRUE;
 
 	/*
 	 * These next parameters speficy if the device reacts to keyboard and 
