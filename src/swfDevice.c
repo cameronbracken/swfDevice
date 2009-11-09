@@ -47,6 +47,7 @@ SEXP swfDevice ( SEXP args ){
 	const char *bg, *fg;
 	double width, height, frameRate;
 	SEXP fontFileList;
+	const char *logFileName;
 
 	/* 
 	 * pGEDevDesc is a variable provided by the R Graphics Engine
@@ -82,6 +83,7 @@ SEXP swfDevice ( SEXP args ){
 	fg = CHAR(asChar(CAR(args))); args = CDR(args);
 	frameRate = asReal(asChar(CAR(args))); args = CDR(args);
 	fontFileList = CAR(args); args = CDR(args);
+	logFileName = CHAR(asChar(CAR(args))); args = CDR(args);
 	
 
 	/* Ensure there is an empty slot avaliable for a new device. */
@@ -111,7 +113,7 @@ SEXP swfDevice ( SEXP args ){
 		 * in this file.
 		*/
 		if( !SWF_Setup( deviceInfo, fileName, width, height, bg, fg, 
-			frameRate, fontFileList ) ){
+			frameRate, fontFileList, logFileName ) ){
 			/* 
 			 * If setup was unsuccessful, destroy the device and return
 			 * an error message.
@@ -145,7 +147,7 @@ SEXP swfDevice ( SEXP args ){
 
 static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	double width, double height, const char *bg, const char *fg, 
-	double frameRate, SEXP fontFileList ){
+	double frameRate, SEXP fontFileList, const char *logFileName ){
 
 	/* 
 	 * Create swfInfo, this variable contains information which is
@@ -183,6 +185,7 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 
 	/* Copy SWF-specific information to the swfInfo variable. */
 	strcpy( swfInfo->outFileName, fileName);
+	strcpy( swfInfo->logFileName, logFileName);
 	swfInfo->debug = DEBUG;
 	swfInfo->nFrames = 0;
 	swfInfo->frameRate = frameRate;
@@ -253,7 +256,7 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	 * output file by not printing objects that fall outside the plot 
 	 * boundaries. 
 	*/
-	deviceInfo->canClip = TRUE;
+	deviceInfo->canClip = FALSE;
 
 	/*
 	 * These next parameters speficy if the device reacts to keyboard and 
@@ -383,7 +386,7 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 
 	//Debug log
 	if( swfInfo->debug == TRUE ){
-		if( !( swfInfo->logFile = fopen(R_ExpandFileName("swfDevice.log"), "w") ) )
+		if( !( swfInfo->logFile = fopen(R_ExpandFileName(swfInfo->logFileName), "w") ) )
 			return FALSE;
 			
 		fprintf(swfInfo->logFile,
@@ -643,11 +646,15 @@ static double SWF_StrWidth( const char *str,
 	// Set the height of the text
 	SWFText_setHeight(text_object, plotParams->ps * plotParams->cex);
 	
+	if( swfInfo->debug == TRUE )
+		fprintf(swfInfo->logFile, "Honoring ps=%7.2f, cex=%7.2f\n",
+			plotParams->ps, plotParams->cex);
+	
 	float width = SWFText_getStringWidth(text_object, str);
 	
 	if( swfInfo->debug == TRUE ){
 		fprintf(swfInfo->logFile,
-			"Calculated Width of \"%s\" as %7.2f\n", str, width);
+			"\tCalculated Width of \"%s\" as %7.2f\n", str, width);
 		fflush(swfInfo->logFile);
 	}
 	
@@ -983,10 +990,12 @@ static void SWF_Polygon( int n, double *x, double *y,
 	for ( i = 1; i < n; i++ ){
 		
 		/*Ming (0,0) is the top left, convert to R (0,0) at bottom left*/
-		y[0] = deviceInfo->top - y[0];
+		y[i] = deviceInfo->top - y[i];
 		
 		SWF_drawStyledLineTo(line, x[i], y[i], plotParams->lty);	
 	}
+	/*  Wrap back around to the beginning */
+	SWF_drawStyledLineTo(line, x[0], y[0], plotParams->lty);
 		
 	SWFDisplayItem polyd = SWFMovie_add(swfInfo->m, (SWFBlock) line);
 	
@@ -1134,6 +1143,8 @@ static void SWF_drawStyledLineTo(SWFShape line, double x_end, double y_end, int 
 	for(i = 0; i < 8 && lty & 15 ; i++) {
 		dashlist[i] = lty & 15;
 		lty = lty >> 4;
+		//if( DEBUG == TRUE )
+		//	Rprintf("\tDash List: %d\n", dashlist[i]);
 	}
 	nlty = i; i = 0;
 	
@@ -1161,25 +1172,26 @@ static void SWF_drawStyledLineTo(SWFShape line, double x_end, double y_end, int 
 	double x_next, y_next, ang = atan((y_end-y_cur)/(x_end-x_cur));
 		//distance to end of dash segment and end of line
 	double d_dash, d_line = 10000, old_d_line;
-	Rboolean my_break = FALSE;
+	Rboolean at_line_end = FALSE;
 	
 	//Rprintf("x_cur=%f x_end=%f\n",x_cur,x_end);
 	//Rprintf("y_cur=%f y_end=%f\n",y_cur,y_end);
 	
-	while( my_break == FALSE ){
+	while( at_line_end == FALSE ){
 		while(i < nlty){
 			//Rprintf("INNER LOOP\n");
 			
 			/*
 			 * This part is so whacked out, basically the different origins of 
 			 * R and ming make drawing dashed lines REALLY confusing. This 
-			 * seems to work. ;)
+			 * seems to work though :). A lot of things in R graphics seem to
+			 * go this way. 
 			*/
-			if(x_end < x_cur && y_end < y_cur){
+			if(x_end < x_cur && y_end <= y_cur){
 				x_next = x_cur - (double)dashlist[i] * cos(ang);
 				y_next = y_cur - (double)dashlist[i] * sin(ang);
 			}
-			if(x_end > x_cur && y_end < y_cur){
+			if(x_end > x_cur && y_end <= y_cur){
 				x_next = x_cur + (double)dashlist[i] * cos(ang);
 				y_next = y_cur + (double)dashlist[i] * sin(ang);
 			}
@@ -1198,7 +1210,7 @@ static void SWF_drawStyledLineTo(SWFShape line, double x_end, double y_end, int 
 
 			//Rprintf("i=%d nlty=%d\n",i,nlty);
 			//Rprintf("x_cur=%f x_end=%f x_next=%f\n",x_cur,x_end,x_next);
-			//Rprintf("y_cur=%f y_end=%f y_next=%f\n",y_cur,y_end,x_next);
+			//Rprintf("y_cur=%f y_end=%f y_next=%f\n",y_cur,y_end,y_next);
 			//Rprintf("ang=%f\n",ang);
 			//Rprintf("d_dash=%f\n",d_dash);
 			//Rprintf("d_line=%f\n",d_line);
@@ -1212,15 +1224,19 @@ static void SWF_drawStyledLineTo(SWFShape line, double x_end, double y_end, int 
 				}else{
 					SWFShape_movePenTo(line, x_end, y_end);
 				}
-				my_break = TRUE; //out of main loop
+				at_line_end = TRUE; //out of main loop
 				break; //out of inner loop
 			}
 				
 			if( (i % 2) == 0 ){
 					//draw to the end point of the dash segment
 				SWFShape_drawLineTo(line, x_next, y_next);
+				//if( DEBUG == TRUE )
+				//	Rprintf("\tDrawing dash line to: (%f,%f)\n", x_next, y_next);
 			}else{
 				SWFShape_movePenTo(line, x_next, y_next);
+				//if( DEBUG == TRUE )
+				//	Rprintf("\tMoving dash pen to: (%f,%f)\n", x_next, y_next);
 			}
 			// Update coordinates
 			x_cur = x_next; y_cur = y_next; 
@@ -1288,45 +1304,57 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 	switch(fontface){
 		
 		case 1: //plain
-			if(strcmp(fontfamily, "serif"))
+			if(strcmp(fontfamily, "serif")){
 				font = swfInfo->se;
-			if(strcmp(fontfamily, "mono"))
+			}else if(strcmp(fontfamily, "mono")){
 				font = swfInfo->mo;
-			if(strcmp(fontfamily, "sans"))
+			}else if(strcmp(fontfamily, "sans")){
 				font = swfInfo->ss;
-			if(strcmp(fontfamily, ""))
+			}else if(strcmp(fontfamily, "")){
 				font = swfInfo->ss;
+			}else{
+				font = swfInfo->ss;
+			}
 			break;
 		case 2: //bold
-			if(strcmp(fontfamily, "serif"))
+			if(strncmp(fontfamily, "serif", 5)){
 				font = swfInfo->se_b;
-			if(strcmp(fontfamily, "mono"))
+			}else if(strncmp(fontfamily, "mono", 4)){
 				font = swfInfo->mo_b;
-			if(strcmp(fontfamily, "sans"))
+			}else if(strncmp(fontfamily, "sans", 4)){
 				font = swfInfo->ss_b;
-			if(strcmp(fontfamily, ""))
-				font = swfInfo->ss_b;
+			}else if(strcmp(fontfamily, "")){
+				font = swfInfo->se_b;
+			}else{
+				font = swfInfo->se_b;
+			}
 			break;
 		case 3: //italic
-			if(strcmp(fontfamily, "serif"))
+			if(strncmp(fontfamily, "serif", 5)){
 				font = swfInfo->se_i;
-			if(strcmp(fontfamily, "mono"))
+			}else if(strncmp(fontfamily, "mono", 4)){
 				font = swfInfo->mo_i;
-			if(strcmp(fontfamily, "sans"))
+			}else if(strncmp(fontfamily, "sans", 4)){
 				font = swfInfo->ss_i;
-			if(strcmp(fontfamily, ""))
-				font = swfInfo->ss_i;
+			}else if(strcmp(fontfamily, "")){
+				font = swfInfo->se_i;
+			}else{
+				font = swfInfo->se_i;
+			}
 			break;
 		case 4:
 			//bold italic
-			if(strcmp(fontfamily, "serif"))
+			if(strncmp(fontfamily, "serif", 5)){
 				font = swfInfo->se_b_i;
-			if(strcmp(fontfamily, "mono"))
+			}else if(strncmp(fontfamily, "mono", 4)){
 				font = swfInfo->mo_b_i;
-			if(strcmp(fontfamily, "sans"))
+			}else if(strncmp(fontfamily, "sans", 4)){
 				font = swfInfo->ss_b_i;
-			if(strcmp(fontfamily, ""))
-				font = swfInfo->ss_b_i;
+			}else if(strcmp(fontfamily, "")){
+				font = swfInfo->se_b_i;
+			}else{
+				font = swfInfo->se_b_i;
+			}
 			break;
 		case 5:
 			//symbol font (not supported)

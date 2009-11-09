@@ -51,9 +51,10 @@ function(file = "Rplots.swf", width = 7, height = 7, bg = "white",
 	}
 	
 	#message(paste('Loading',fontFiles,collapse='\n'))
-		
+	logFile <- sprintf("%s.log",file)
+	
     .External('swfDevice', file, width, height, bg, fg, 
-		frameRate, fontFiles ,PACKAGE='swfDevice')
+		frameRate, fontFiles, logFile ,PACKAGE='swfDevice')
 	invisible()
 	
 }
