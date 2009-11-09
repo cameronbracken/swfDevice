@@ -1317,43 +1317,43 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 			}
 			break;
 		case 2: //bold
-			if(strcmp(fontfamily, "serif")){
+			if(strncmp(fontfamily, "serif", 5)){
 				font = swfInfo->se_b;
-			}else if(strcmp(fontfamily, "mono")){
+			}else if(strncmp(fontfamily, "mono", 4)){
 				font = swfInfo->mo_b;
-			}else if(strcmp(fontfamily, "sans")){
+			}else if(strncmp(fontfamily, "sans", 4)){
 				font = swfInfo->ss_b;
 			}else if(strcmp(fontfamily, "")){
-				font = swfInfo->ss_b;
+				font = swfInfo->se_b;
 			}else{
-				font = swfInfo->ss_b;
+				font = swfInfo->se_b;
 			}
 			break;
 		case 3: //italic
-			if(strcmp(fontfamily, "serif")){
+			if(strncmp(fontfamily, "serif", 5)){
 				font = swfInfo->se_i;
-			}else if(strcmp(fontfamily, "mono")){
+			}else if(strncmp(fontfamily, "mono", 4)){
 				font = swfInfo->mo_i;
-			}else if(strcmp(fontfamily, "sans")){
+			}else if(strncmp(fontfamily, "sans", 4)){
 				font = swfInfo->ss_i;
 			}else if(strcmp(fontfamily, "")){
-				font = swfInfo->ss_i;
+				font = swfInfo->se_i;
 			}else{
-				font = swfInfo->ss_i;
+				font = swfInfo->se_i;
 			}
 			break;
 		case 4:
 			//bold italic
-			if(strcmp(fontfamily, "serif")){
+			if(strncmp(fontfamily, "serif", 5)){
 				font = swfInfo->se_b_i;
-			}else if(strcmp(fontfamily, "mono")){
+			}else if(strncmp(fontfamily, "mono", 4)){
 				font = swfInfo->mo_b_i;
-			}else if(strcmp(fontfamily, "sans")){
+			}else if(strncmp(fontfamily, "sans", 4)){
 				font = swfInfo->ss_b_i;
 			}else if(strcmp(fontfamily, "")){
-				font = swfInfo->ss_b_i;
+				font = swfInfo->se_b_i;
 			}else{
-				font = swfInfo->ss_b_i;
+				font = swfInfo->se_b_i;
 			}
 			break;
 		case 5:
