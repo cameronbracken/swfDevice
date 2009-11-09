@@ -118,6 +118,10 @@ tests <- list(
 		lines(c(2,1),c(2,1),type='o',lty=2)
 		lines(c(0,1),c(1,0),type='o',lty=2)
 		lines(c(2,1),c(1,2),type='o',lty=2)
+		lines(c(1,2),c(2,2),type='o',lty=3)
+		lines(c(2,2),c(2,1),type='o',lty=3)
+		lines(c(0,1),c(0,0),type='o',lty=3)
+		lines(c(0,0),c(0,1),type='o',lty=3)
 		
 	},
 
@@ -136,20 +140,25 @@ tests <- list(
 	#test of fontface and fontfamily
 	function(main){
 		
-		plot(12:1,1:12,type='n',axes=F,xlim=c(0,12),ylim=c(1,12),xlab='',ylab='')
+		plot(16:1,1:16,type='n',axes=F,xlim=c(0,16),
+			ylim=c(1,16),xlab='',ylab='')
 		box()
-		text(1,12,"serif normal",font=1,family='serif')
-		text(2,11,"serif bold",font=2,family='serif')
-		text(3,10,"serif italic",font=3,family='serif')
-		text(4,9,"serif bold italic",font=4,family='serif')
-		text(5,8,"sans normal",font=1,family='sans')
-		text(6,7,"sans bold",font=2,family='sans')
-		text(7,6,"sans italic",font=3,family='sans')
-		text(8,5,"sans bold italic",font=4,family='sans')
-		text(9,4,"mono normal",font=1,family='mono')
-		text(10,3,"mono bold",font=2,family='mono')
-		text(11,2,"mono italic",font=3,family='mono')
-		text(12,1,"mono bold italic",font=4,family='mono')
+		text(1,16,"serif normal",font=1,family='serif')
+		text(2,15,"serif bold",font=2,family='serif')
+		text(3,14,"serif italic",font=3,family='serif')
+		text(4,13,"serif bold italic",font=4,family='serif')
+		text(5,12,"sans normal",font=1,family='sans')
+		text(6,11,"sans bold",font=2,family='sans')
+		text(7,10,"sans italic",font=3,family='sans')
+		text(8,9,"sans bold italic",font=4,family='sans')
+		text(9,8,"mono normal",font=1,family='mono')
+		text(10,7,"mono bold",font=2,family='mono')
+		text(11,6,"mono italic",font=3,family='mono')
+		text(12,5,"mono bold italic",font=4,family='mono')
+		text(13,4,"default normal",font=1)
+		text(14,3,"default bold",font=2)
+		text(15,2,"default italic",font=3)
+		text(16,1,"default bold italic",font=4)
 		
 	},
 
@@ -293,4 +302,15 @@ for( i in 1:length(tests)){
 	tests[[i]]( pngname )
 	dev.off()
 	#possibly generate gallery here
+}
+
+file.remove('swfs.html')
+file.create('swfs.html')
+swfs <- list.files(,"[0-9][0-9][.]swf$")
+pngs <- list.files(,"[0-9][0-9][.]png$")
+
+for(i in 1:length(swfs)){
+	system(paste('swfdump --xhtml',swfs[i],'>> swfs.html'))
+	cat('<img src=\'',pngs[i],'\'/>\n',file='swfs.html',append=T,sep='')
+	cat('<br/>\n',file='swfs.html',append=T)
 }

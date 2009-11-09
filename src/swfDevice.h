@@ -21,6 +21,7 @@ struct display_list {
 typedef struct swfDevDesc{
 	FILE *logFile;
 	char outFileName[512];
+	char logFileName[512];
 	Rboolean debug;
 	SWFMovie m;
 	SWFFont ss;     // sans serif 
@@ -46,7 +47,7 @@ typedef struct swfDevDesc{
 
 static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	double width, double height, const char *bg, const char *fg, 
-	double frameRate, SEXP fontFileList );
+	double frameRate, SEXP fontFileList, const char *logFileName );
 
 double dim2dev( double length );
 
