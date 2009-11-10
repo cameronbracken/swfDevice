@@ -284,6 +284,33 @@ tests <- list(
 		ani.options(interval = 0.001)
 		lln.ani(pch = ".")
 		
+	},
+	
+	function(main){
+		
+		leader <- c(0,0)
+		ang <- round(runif(1,10,80))
+		n <- 100
+		ns <- 200
+		d <- .6
+		p <- 1
+		followers <- cbind(rnorm(n),rnorm(n))
+		bg <- rainbow(10,alpha=.5)
+		sc <- rainbow(n,alpha=.5)
+		for(i in 1:ns){
+			
+			plot(followers,xlab='',ylab='',main=main,xlim=c(-3,3),ylim=c(-3,3))
+			points(leader[1],leader[2],bg=bg[7],pch=19,col=1)
+			points(followers,bg=sc,pch=19,col=sc)
+			
+			leader[1] <- leader[1] + d*cos(ang*pi/180)
+			leader[2] <- leader[2] + d*sin(ang*pi/180)
+			if(leader[1] < -3 | leader[2] < -3 | leader[1] > 3 | leader[2] > 3) 
+				ang <- (90 + ang) %% 360
+			followers[,1] <- followers[,1] + p*runif(n) * (leader[1] - followers[,1])
+			followers[,2] <- followers[,2] + p*runif(n) * (leader[2] - followers[,2])
+		}
+		
 	}
 	
 	
@@ -295,7 +322,7 @@ for( i in 1:length(tests)){
 	cat('Running Test', n, 'of', length(tests) ,'\n')
 	name <- paste('swfDevice_test',n,'.swf',sep='')
 	pngname <- paste('swfDevice_test',n,'.png',sep='')
-	swf(name,frameRate=1)
+	swf(name,frameRate=12)
 	tests[[i]]( name )
 	dev.off()
 	png(pngname,type='cairo',width=504,height=504)
