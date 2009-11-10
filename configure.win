@@ -1,0 +1,42 @@
+#!/bin/sh
+
+MING_HOME="C:/cygwin"
+MING_INC_DIR="${MING_HOME}/usr/include"
+MING_LIB_DIR="${MING_HOME}/lib"
+echo "MING_HOME=${MING_HOME}" > src/Makeconf.win
+echo "MING_INC_DIR=${MING_INC_DIR}" >> src/Makeconf.win
+echo "MING_LIB_DIR=${MING_LIB_DIR}" >> src/Makeconf.win
+
+echo "using MING_HOME: ${MING_HOME}"
+
+
+if test -z "$R_PACKAGE_DIR" ; then
+  R_PACKAGE_DIR=${DPKG}
+fi
+
+mkdir "${R_PACKAGE_DIR}/libs"
+mkdir "${R_PACKAGE_DIR}/includes"
+cp ${MING_LIB_DIR}/libming.dll.a "${R_PACKAGE_DIR}/libs"
+#cp ${MING_LIB_DIR}/libming.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_LIB_DIR}/libming.dll "${R_PACKAGE_DIR}/libs/libming-1.dll"
+#cp ${MING_LIB_DIR}/libungif4.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_LIB_DIR}/libpng12-0.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_LIB_DIR}/libfreetype-6.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_LIB_DIR}/mgwz.dll "${R_PACKAGE_DIR}/libs"
+cp -r ${MING_INC_DIR}/ming.h "${R_PACKAGE_DIR}/includes"
+cp -r ${MING_INC_DIR}/ming_config.h "${R_PACKAGE_DIR}/includes"
+
+#cp ${MING_HOME}/bin/cygming-0.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cyggif-4.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cygungif-4.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cygpng12.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cygz.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cygfreetype-6.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cyggcc_s-1.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cygX11-6.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cygwin1.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cygxcb-1.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cygXau-6.dll "${R_PACKAGE_DIR}/libs"
+#cp ${MING_HOME}/bin/cygXdmcp-6.dll "${R_PACKAGE_DIR}/libs"
+#cp -r ${MING_HOME}/usr/include/ming.h "${R_PACKAGE_DIR}/includes"
+

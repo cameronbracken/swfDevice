@@ -1,0 +1,4 @@
+include Makeconf.win
+
+PKG_CPPFLAGS=-I"${MING_INC_DIR}"
+PKG_LIBS=-L"${MING_LIB_DIR}" -lming
