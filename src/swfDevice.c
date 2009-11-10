@@ -186,7 +186,6 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	swfInfo->debug = DEBUG;
 	swfInfo->nFrames = 0;
 	swfInfo->frameRate = frameRate;
-	swfInfo->polyLine = FALSE;
 	/*Initilize the SWF movie version 8 so more line styles can be used*/
 	swfInfo->m = newSWFMovieWithVersion(8);
 	
@@ -253,7 +252,8 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	 * output file by not printing objects that fall outside the plot 
 	 * boundaries. 
 	*/
-	deviceInfo->canClip = TRUE;
+	deviceInfo->canClip = FALSE
+	;
 
 	/*
 	 * These next parameters speficy if the device reacts to keyboard and 

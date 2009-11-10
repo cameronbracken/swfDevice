@@ -10,7 +10,7 @@
 #include <Rinternals.h>
 #include <R_ext/GraphicsEngine.h>
 
-/* Linked list containing list of displayed items fro each frame*/
+/* Linked list containing list of displayed items from each frame*/
 typedef struct display_list DisplayList;
 
 struct display_list { 
@@ -37,8 +37,9 @@ typedef struct swfDevDesc{
 	SWFFont se_b_i;    // serif bold italic
 	int nFrames;
 	double frameRate;
-	Rboolean polyLine;
+	//pointer to head of linked list of display items on current frame
 	DisplayList *displayListHead; 
+	//pointer to tail of linked list of display items on current frame
 	DisplayList *displayListTail;
 } swfDevDesc;
 

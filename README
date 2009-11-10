@@ -34,7 +34,7 @@ __Todo__
 
 __Lessons Learned__
 
-* SWFShape_setRightFillStyle() and SWFShape_setLine2() do not play nicely
+* SWFShape\_setRightFillStyle() and SWFShape\_setLine2() do not play nicely
 
 
 __Planned Features__
