@@ -1,0 +1,7 @@
+.PHONY: all libming
+
+all: $(SHLIB)
+$(SHLIB): libming
+
+libming:
+	(cd ming-lite; make dynamic)
