@@ -28,6 +28,8 @@ The Ming Library: \url{http://www.libming.org/}
 }
 \keyword{ 
 package 
+}
+\keyword{ 
 device
 }
 \seealso{

@@ -27,7 +27,7 @@ __Todo__
 	- lmitre
 	- lineheight
 * Graphics primitives 
-	- metricInfo     
+	- metricInfo
 	- textUTF8       
 	- strWidthUTF8
 * Windows?
