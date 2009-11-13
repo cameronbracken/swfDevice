@@ -29,6 +29,6 @@ if [ ${allok} != yes ]; then
     exit 1
 fi
 
-echo "  seems ok, ready to go"
+echo " Ready to go"
 
 exit 0

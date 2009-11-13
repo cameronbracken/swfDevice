@@ -1,10 +1,10 @@
 PKG_CPPFLAGS=-I. -Iming-lite -Iwindows
 PKG_LIBS=-Lwindows -L. -lming
 
-.PHONY: libming.dll all
+.PHONY: libming.a all
 
 all: $(SHLIB)
-$(SHLIB): libming.dll
+$(SHLIB): libming.a
 
 libming.a:
-	(cd ming-lite; make dynamic)
+	(cd ming-lite; make static)
