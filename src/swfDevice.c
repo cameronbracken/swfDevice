@@ -31,7 +31,7 @@
 #include <math.h>
 
 #include "swfDevice.h"
-#define DEBUG TRUE
+#define DEBUG FALSE
 
 SEXP swfDevice ( SEXP args ){
 

@@ -89,16 +89,16 @@
 #define USE_CXX 1
 
 /* Use freetype library */
-#define USE_FREETYPE 1
+#define USE_FREETYPE 0
 
 /* Use gif library */
-#define USE_GIF 1
+#define USE_GIF 0
 
 /* Use png library */
-#define USE_PNG 1
+#define USE_PNG 0
 
 /* Use zlib */
-#define USE_ZLIB 1
+#define USE_ZLIB 0
 
 /* Version number of package */
 #define VERSION "0.4.2"

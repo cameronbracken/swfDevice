@@ -1,6 +1,6 @@
 # actioncompiler
 
-CC = gcc -g -Wall -I..
+CC = gcc -g -Wall -I.. -I.
 
 OFILES = 	\
 	assembler.o \

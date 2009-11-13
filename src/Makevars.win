@@ -1,4 +1,10 @@
-include Makeconf.win
+PKG_CPPFLAGS=-I. -Iming-lite -Iwindows
+PKG_LIBS=-Lwindows -L. -lming
 
-PKG_CPPFLAGS=-I"${MING_INC_DIR}"
-PKG_LIBS=-L"${MING_LIB_DIR}" -lming
+.PHONY: libming.dll all
+
+all: $(SHLIB)
+$(SHLIB): libming.dll
+
+libming.a:
+	(cd ming-lite; make dynamic)

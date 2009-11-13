@@ -1,9 +1,9 @@
 # blocks
 
-CC = gcc -g -Wall -I..
+CC = gcc -g -Wall -I.. -I.
 
 OFILES = 	\
-	binary.o	\	\
+	binary.o	\
 	block.o	\
 	browserfont.o	\
 	button.o	\
@@ -51,7 +51,8 @@ OFILES = 	\
 	gifdbl.o	\
 	pngdbl.o	\
 	ttffont.o	\
-	bitmap.o	
+	bitmap.o	\
+	action.o	
 
 all: ${OFILES}
 

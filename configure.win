@@ -1,0 +1,34 @@
+#!/bin/sh
+
+echo "  checking ming dependency libraries"
+allok=yes
+
+echo "  unpacking current libs"
+mkdir src/windows
+tar fxz src/png-z-gif-freetype-w32.tar.gz -C src/windows
+cp -r src/windows/png-z-gif-freetype-w32/inst/libs inst
+cp -r src/windows/png-z-gif-freetype-w32/src/windows/* src/windows
+if [ ! -e inst/libs/zlib1.dll ]; then
+    allok=no
+fi
+
+if [ ! -e inst/libs ]; then
+    allok=no
+fi
+
+if [ ${allok} != yes ]; then
+    echo ""
+    echo " *** ERROR: unable to find required libraries for building ming"
+    echo ""
+    echo " They must be either in src/windows or in a tar-ball:"
+    echo " src/windows/png-z-gif-freetype-w32.tar.gz"
+    echo ""
+    echo " You can get the latest binary ball from:"
+    echo " Yo Mamma"
+    echo ""
+    exit 1
+fi
+
+echo "  seems ok, ready to go"
+
+exit 0

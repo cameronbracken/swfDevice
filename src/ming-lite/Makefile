@@ -1,4 +1,9 @@
-CC = gcc -g -Wall -I. -I${R_HOME}/include
+#ming-lite
+
+FLAGS = -g -Wall -I. -I../windows
+LIBS = ../windows/*.a
+#-lz -lpng -lfreetype -lungif
+CC = gcc ${FLAGS}
 
 OFILES = \
 	blocklist.o \
@@ -18,18 +23,19 @@ OFILES = \
 dynamic: ${OFILES}
 	cd blocks && make
 	cd actioncompiler && make
-	${CC} ${OFILES} blocks/*.o actioncompiler/*.o -shared -fpic \
-	  -o libming.so
-	cp libming.so ..
+	${CC} ${OFILES} blocks/*.o actioncompiler/*.o ${LIBS} -shared \
+	  -fpic -o libming.dll
+	cp libming.dll ../../inst/libs
+	cp libming.dll ..
 
 static: ${OFILES}
 	cd blocks && make
 	cd actioncompiler && make
-	ar r libming.a blocks/*.o actioncompiler/*.o ${OFILES}
+	ar r libming.a blocks/*.o actioncompiler/*.o ${OFILES} ${LIBS}
 	ranlib libming.a  # bsd requires this?
 	cp libming.a ..
 
 clean:
 	cd blocks && make clean
 	cd actioncompiler && make clean
-	rm -f *.o libming.a libming.so
+	rm -f *.o libming.a libming.dll
