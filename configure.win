@@ -4,20 +4,20 @@ echo "  Checking ming dependency libraries"
 allok=yes
 
 if [ ! -e inst/libs/zlib1.dll ]; then
-	if [ ! -e inst/windows/png-z-gif-freetype-w32.tar.gz ]; then
+	if [ ! -e src/windows/png-z-gif-freetype-w32.tar.gz ]; then
 		echo "  cannot find current ming dependency lib files"
 		echo "  attempting to download them"
-		mkdir -p inst/windows 2> /dev/null
-		echo 'download.file("http://cloud.github.com/downloads/cameronbracken/swfDevice/png-z-gif-freetype-w32.tar.gz","inst/windows/cairo-current-w32.tar.gz",mode="wb")'|${R_HOME}/bin/R --vanilla --slave
+		mkdir -p src/windows 2> /dev/null
+		echo 'download.file("http://cloud.github.com/downloads/cameronbracken/swfDevice/png-z-gif-freetype-w32.tar.gz","src/windows/png-z-gif-freetype-w32.tar.gz",mode="wb")'|${R_HOME}/bin/R --vanilla --slave
     fi
     if [ ! -e src/windows/png-z-gif-freetype-w32.tar.gz ]; then
 		allok=no
     else
 		echo "  Unpacking current libs"
 		mkdir src/windows
-		tar fxz inst/png-z-gif-freetype-w32.tar.gz -C src/windows
-		cp -r inst/windows/png-z-gif-freetype-w32/inst/libs inst
-		cp -r inst/windows/png-z-gif-freetype-w32/src/windows/* src/windows
+		tar fxz src/windows/png-z-gif-freetype-w32.tar.gz -C src/windows
+		cp -r src/windows/png-z-gif-freetype-w32/inst/libs inst
+		cp -r src/windows/png-z-gif-freetype-w32/src/windows/* src/windows
 		if [ ! -e inst/libs/zlib1.dll ]; then
 		    allok=no
 		fi
@@ -33,7 +33,7 @@ if [ ${allok} != yes ]; then
     echo " *** ERROR: unable to find required libraries for building ming"
     echo ""
     echo " They must be either in inst/windows or in a tar-ball:"
-    echo " inst/windows/png-z-gif-freetype-w32.tar.gz"
+    echo " src/windows/png-z-gif-freetype-w32.tar.gz"
     echo ""
     echo " You can get the latest binary ball from:"
     echo " http://cloud.github.com/downloads/cameronbracken/swfDevice/png-z-gif-freetype-w32.tar.gz"
