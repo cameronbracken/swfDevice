@@ -1,4 +1,4 @@
-MING_OPTS := $(shell /opt/local/bin/ming-config --libs --cflags)
+MING_OPTS := $(shell ming-config --libs --cflags)
 
 all: tests examples
 
@@ -18,4 +18,4 @@ examples:
 	./testActions
 
 clean:
-	rm *.swf testShapes testButtons testText testShapes
+	rm *.swf testShapes testButtons testText testActions

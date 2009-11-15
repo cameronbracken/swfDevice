@@ -38,6 +38,9 @@ typedef struct swfDevDesc{
 	SWFFont se_b_i;    // serif bold italic
 	int nFrames;
 	double frameRate;
+	Rboolean haveControls;
+	double ControlsX;
+	double ControlsY;
 	//pointer to head of linked list of display items on current frame
 	DisplayList *displayListHead; 
 	//pointer to tail of linked list of display items on current frame
@@ -101,5 +104,6 @@ static void addToDisplayList(SWFDisplayItem item);
 static R_INLINE SEXP getListElement(SEXP list, char *nm);
 static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfInfo);
 static void SWF_drawStyledLineTo(SWFShape line, double x_end, double y_end, int lty);
+void SWF_addPlayerControls(double *x, double *y);
 
 #endif // End of Once Only header

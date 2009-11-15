@@ -29,7 +29,7 @@ int main(void)
         SWFMovie_setRate(test_movie, 24.0);
 
         // Load a font from disk
-        font_object = newSWFFont_fromFile("../fonts/ttf-bitstream-vera-1.10/Vera.ttf");
+        font_object = newSWFFont_fromFile("../fonts/vera/Vera.ttf");
         if (NULL == font_object)
         {
                 // Something went wrong, so exit

@@ -300,6 +300,17 @@ tests <- list(
 		for(i in 1:ns){
 			
 			plot(followers,xlab='',ylab='',main=main,xlim=c(-3,3),ylim=c(-3,3))
+			if(length(grep('png',main)) == 0){
+				swfAddPlayerControls('top')
+				swfAddPlayerControls('bottom')
+				swfAddPlayerControls('left')
+				swfAddPlayerControls('right')
+				swfAddPlayerControls('topright')
+				swfAddPlayerControls('topleft')
+				swfAddPlayerControls('bottomright')
+				swfAddPlayerControls('bottomleft')
+				swfAddPlayerControls('center')
+			}
 			points(leader[1],leader[2],bg=bg[7],pch=19,col=1)
 			points(followers,bg=sc,pch=19,col=sc)
 			
@@ -309,14 +320,14 @@ tests <- list(
 				ang <- (90 + ang) %% 360
 			followers[,1] <- followers[,1] + p*runif(n) * (leader[1] - followers[,1])
 			followers[,2] <- followers[,2] + p*runif(n) * (leader[2] - followers[,2])
-		}
-		
+		}	
+		plot(followers,xlab='',ylab='',main=main,xlim=c(-3,3),ylim=c(-3,3),type='n')
 	}
 	
 	
 )
 	
-for( i in 1:length(tests)){
+for( i in 27:length(tests)){
 	
 	n <- sprintf('%02d',i)
 	cat('Running Test', n, 'of', length(tests) ,'\n')

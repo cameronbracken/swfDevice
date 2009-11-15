@@ -1,8 +1,10 @@
 #ming-lite
 
-FLAGS = -g -Wall -I. -I../windows
-LIBS = ../windows/*.a
-#-lz -lpng -lfreetype -lungif
+include ../Makeconf.win
+
+FLAGS = -g -Wall -I. -I${INC_DIR}
+LIBS = 
+#-L${LIB_DIR} -lz -lpng -lfreetype -lungif
 CC = gcc ${FLAGS}
 
 OFILES = \

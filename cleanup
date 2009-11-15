@@ -1,6 +1,6 @@
 #!/bin/sh
 
-rm -rf src/*.o src/*.a src/*.dll src/Makeconf.win autom4te.cache 
-rm -rf config.log config.status inst/libs src/windows
 cd src/ming-lite
 make clean
+rm -rf src/*.o src/*.a src/*.dll src/Makevars src/Makeconf.win autom4te.cache 
+rm -rf config.log config.status inst/libs src/windows

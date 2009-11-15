@@ -1,6 +1,9 @@
 # actioncompiler
 
-CC = gcc -g -Wall -I.. -I.
+include ../../Makeconf.win
+
+FLAGS = -g -Wall -I. -I.. -I${INC_DIR}
+CC = gcc ${FLAGS}
 
 OFILES = 	\
 	assembler.o \
