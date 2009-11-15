@@ -288,18 +288,13 @@ tests <- list(
 	
 	function(main){
 		
-		leader <- c(0,0)
-		ang <- round(runif(1,10,80))
-		n <- 100
-		ns <- 200
-		d <- .6
-		p <- 1
-		followers <- cbind(rnorm(n),rnorm(n))
-		bg <- rainbow(10,alpha=.5)
-		sc <- rainbow(n,alpha=.5)
+		b <- rainbow(1000,alpha=.3)
+		p <- cbind(rnorm(1),rnorm(1))
+		ns <- ifelse(length(grep('png',main)) == 0,200,1)
+		
 		for(i in 1:ns){
 			
-			plot(followers,xlab='',ylab='',main=main,xlim=c(-3,3),ylim=c(-3,3))
+			plot(p,xlab='',ylab='',main=main,xlim=c(-3,3),ylim=c(-3,3),type='n')
 			if(length(grep('png',main)) == 0){
 				swfAddPlayerControls('top')
 				swfAddPlayerControls('bottom')
@@ -310,6 +305,40 @@ tests <- list(
 				swfAddPlayerControls('bottomright')
 				swfAddPlayerControls('bottomleft')
 				swfAddPlayerControls('center')
+			}
+			points(p,bg=sample(b,i),pch=19,col=sample(b,i))
+			p <- rbind(p,cbind(rnorm(1),rnorm(1)))
+		}	
+		plot(p,xlab='',ylab='',main=main,xlim=c(-3,3),ylim=c(-3,3),type='n')
+		if(length(grep('png',main)) == 0){
+			swfAddPlayerControls('top')
+			swfAddPlayerControls('bottom')
+			swfAddPlayerControls('left')
+			swfAddPlayerControls('right')
+			swfAddPlayerControls('topright')
+			swfAddPlayerControls('topleft')
+			swfAddPlayerControls('bottomright')
+			swfAddPlayerControls('bottomleft')
+			swfAddPlayerControls('center')
+		}
+	},
+	
+	function(main){
+		
+		leader <- c(0,0)
+		ang <- round(runif(1,10,80))
+		n <- 100
+		ns <- ifelse(length(grep('png',main)) == 0,200,1)
+		d <- .6
+		p <- 1
+		followers <- cbind(rnorm(n),rnorm(n))
+		bg <- rainbow(10,alpha=.5)
+		sc <- rainbow(n,alpha=.5)
+		for(i in 1:ns){
+			
+			plot(followers,xlab='',ylab='',main=main,xlim=c(-3,3),ylim=c(-3,3))
+			if(length(grep('png',main)) == 0){
+				swfAddPlayerControls('topright')
 			}
 			points(leader[1],leader[2],bg=bg[7],pch=19,col=1)
 			points(followers,bg=sc,pch=19,col=sc)
@@ -322,24 +351,68 @@ tests <- list(
 			followers[,2] <- followers[,2] + p*runif(n) * (leader[2] - followers[,2])
 		}	
 		plot(followers,xlab='',ylab='',main=main,xlim=c(-3,3),ylim=c(-3,3),type='n')
+		if(length(grep('png',main)) == 0){
+			swfAddPlayerControls('topright')
+		}
+	},
+	
+	function(main){
+		
+		suppressMessages(require(tseriesChaos))
+		suppressMessages(require(scatterplot3d))
+		sim.cont.full <- function(syst, start.time, end.time, dt, start.x,
+		                          parms = NULL){
+
+		     times <- seq(start.time, end.time, by = dt)
+		     series <- lsoda(start.x, times, func = syst, parms = parms)[,-1]
+		     series
+		}
+
+		lorenz.ts <- sim.cont.full(lorenz.syst, 0, 20, 0.01,
+		                           start.x=c(20,0,30), parms=c(10, 28, -8/3))
+		
+		par(mar=c(2.2,3.2,0,4.2))
+		scatterplot3d(rbind(lorenz.ts[1,]),type='l',color='steelblue',xlab='x',
+			ylab='y',zlab='z',scale.y=.5, xlim = range(lorenz.ts[,1]),
+			ylim = range(lorenz.ts[,2]), zlim = range(lorenz.ts[,3]))
+		end <- 2
+		if(length(grep('png',main)) == 0){
+			swfAddPlayerControls(-1,-1)
+			end <- nrow(lorenz.ts)-1
+		}
+		
+		for(i in 2:end){			
+			scatterplot3d(lorenz.ts[1:i,],type='l',color='steelblue',xlab='x',
+				ylab='y',zlab='z',scale.y=.5, xlim = range(lorenz.ts[,1]),
+				ylim = range(lorenz.ts[,2]), zlim = range(lorenz.ts[,3]))
+			if(length(grep('png',main)) == 0){
+				swfAddPlayerControls(-1,-1)
+			}
+		}
+		scatterplot3d(lorenz.ts,type='n',xlab='x',
+			ylab='y',zlab='z',scale.y=.5, xlim = range(lorenz.ts[,1]),
+			ylim = range(lorenz.ts[,2]), zlim = range(lorenz.ts[,3]))
+		if(length(grep('png',main)) == 0){
+			swfAddPlayerControls(-1,-1)
+		}
 	}
 	
 	
 )
 	
-for( i in 27:length(tests)){
+for( i in 1:length(tests)){
 	
 	n <- sprintf('%02d',i)
 	cat('Running Test', n, 'of', length(tests) ,'\n')
 	name <- paste('swfDevice_test',n,'.swf',sep='')
 	pngname <- paste('swfDevice_test',n,'.png',sep='')
-	swf(name,frameRate=12)
+	swf(name,frameRate=20)
 	tests[[i]]( name )
 	dev.off()
 	png(pngname,type='cairo',width=504,height=504)
 	tests[[i]]( pngname )
 	dev.off()
-	#possibly generate gallery here
+	
 }
 
 file.remove('swfs.html')

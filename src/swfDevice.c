@@ -1434,9 +1434,9 @@ void SWF_addPlayerControls(double *x, double *y){
 	swfInfo->ControlsY = deviceInfo->top - *y;
 	
 	// Create the fill styles we'll be using
-	red_fill = newSWFSolidFillStyle(0xf0, 0x00, 0x00, 0xff);
-	dark_blue_fill = newSWFSolidFillStyle(0x00, 0x00, 0x90, 0xff);
-	green_fill = newSWFSolidFillStyle(0x00, 0xcc, 0x00, 0xff);
+	red_fill = newSWFSolidFillStyle(0xf0, 0x00, 0x00, 0x99);
+	dark_blue_fill = newSWFSolidFillStyle(0x00, 0x00, 0x90, 0x99);
+	green_fill = newSWFSolidFillStyle(0x00, 0xcc, 0x00, 0x99);
 	
 	// *** Create the Play button ***
 	
