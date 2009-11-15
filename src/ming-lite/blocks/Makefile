@@ -2,7 +2,7 @@
 
 include ../../Makeconf.win
 
-FLAGS = -g -Wall -I. -I.. -I${INC_DIR}
+FLAGS = -g -Wall -I. -I.. -I${INC_DIR} -I../../windows
 CC = gcc ${FLAGS}
 
 OFILES = 	\

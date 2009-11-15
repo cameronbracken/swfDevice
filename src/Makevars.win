@@ -1,7 +1,7 @@
 include Makeconf.win
 
-PKG_CPPFLAGS=-I${INC_DIR} -I. -Iming-lite
-PKG_LIBS=-L${LIB_DIR} -L. -lming
+PKG_CPPFLAGS=-I${INC_DIR} -I. -Iming-lite -Iwindows
+PKG_LIBS=-L${LIB_DIR} -L. -lming -Lwindows -lungif -lpng -lfreetype -lz
 
 .PHONY: libming.a all
 

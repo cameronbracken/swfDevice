@@ -2,7 +2,7 @@
 
 include ../Makeconf.win
 
-FLAGS = -g -Wall -I. -I${INC_DIR}
+FLAGS = -g -Wall -I. -I${INC_DIR} -I../windows
 LIBS = 
 #-L${LIB_DIR} -lz -lpng -lfreetype -lungif
 CC = gcc ${FLAGS}
