@@ -31,7 +31,7 @@
 #include <math.h>
 
 #include "swfDevice.h"
-#define DEBUG TRUE
+#define DEBUG FALSE
 
 SEXP swfDevice ( SEXP args ){
 
@@ -189,23 +189,36 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	swfInfo->debug = DEBUG;
 	swfInfo->nFrames = 0;
 	swfInfo->frameRate = frameRate;
+	swfInfo->haveControls = FALSE;
 	/*Initilize the SWF movie version 8 so more line styles can be used*/
 	swfInfo->m = newSWFMovieWithVersion(8);
 	
 	//const char *ss = CHAR(asChar(getListElement(fontFileList,"ss")));
 	//Rprintf("%s\n",ss);
-	swfInfo->ss = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss"))));
-	swfInfo->ss_b = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_b"))));
-	swfInfo->ss_i = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_i"))));
-	swfInfo->ss_b_i = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_b_i"))));
-	swfInfo->mo = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"mo"))));
-	swfInfo->mo_b = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"mo_b"))));
-	swfInfo->mo_i = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"mo_i"))));
-	swfInfo->mo_b_i = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"mo_b_i"))));
-	swfInfo->se = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"se"))));
-	swfInfo->se_b = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"se_b"))));
-	swfInfo->se_i = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"se_i"))));
-	swfInfo->se_b_i = newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"se_b_i"))));
+	swfInfo->ss = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss"))));
+	swfInfo->ss_b = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_b"))));
+	swfInfo->ss_i = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_i"))));
+	swfInfo->ss_b_i = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"ss_b_i"))));
+	swfInfo->mo = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"mo"))));
+	swfInfo->mo_b = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"mo_b"))));
+	swfInfo->mo_i = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"mo_i"))));
+	swfInfo->mo_b_i = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"mo_b_i"))));
+	swfInfo->se = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"se"))));
+	swfInfo->se_b = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"se_b"))));
+	swfInfo->se_i = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"se_i"))));
+	swfInfo->se_b_i = 
+	newSWFFont_fromFile(CHAR(asChar(getListElement(fontFileList,"se_b_i"))));
 	
 	swfInfo->displayListHead = NULL; 
 	swfInfo->displayListTail = NULL;
@@ -386,7 +399,8 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 
 	//Debug log
 	if( swfInfo->debug == TRUE ){
-		if( !( swfInfo->logFile = fopen(R_ExpandFileName(swfInfo->logFileName), "w") ) )
+		if( !( swfInfo->logFile = 
+			fopen(R_ExpandFileName(swfInfo->logFileName), "w") ) )
 			return FALSE;
 			
 		fprintf(swfInfo->logFile,
@@ -444,14 +458,15 @@ static void SWF_Close( pDevDesc deviceInfo){
 		fclose(swfInfo->logFile);
 	}
 	
-	// Set the desired compression level for the output (9 = maximum compression)
+	// Set the desired compression level for the output 
+	//(9 = maximum compression)
 	Ming_setSWFCompression(9);
 	
 	//For some reason the last frame does't get drawn unless this happens
 	// but then an extra blank frame gets entered?
 	if( swfInfo->nFrames > 1 )
 		SWFMovie_nextFrame( swfInfo->m );
-		
+	
 	// Save the swf movie file to disk
     SWFMovie_save(swfInfo->m, swfInfo->outFileName);
 	
@@ -487,7 +502,8 @@ static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
 	if(!(swfInfo->nFrames == 0)){
 		/*
 		 * Add a new frame to the current movie.
-		 * This function adds a new frame to the current movie. All items added, removed
+		 * This function adds a new frame to the current movie. 
+		 * All items added, removed
 		 * manipulated effect this frame and probably following frames.
 		 */
 		SWFMovie_nextFrame( swfInfo->m );
@@ -511,6 +527,9 @@ static void SWF_NewPage( const pGEcontext plotParams, pDevDesc deviceInfo ){
 		}
 	}
 	swfInfo->nFrames++;
+	/*if(swfInfo->haveControls == TRUE){
+		SWF_addPlayerControls(&swfInfo->ControlsX,&swfInfo->ControlsY);
+	}*/
 	
 }
 
@@ -731,8 +750,8 @@ static void SWF_Text( double x, double y, const char *str,
      * R_GE_gcontext parameters that should be honoured (if possible):
      *   col, gamma, lty, lwd
      */
-static void SWF_Line( double x1, double y1,
-		double x2, double y2, const pGEcontext plotParams, pDevDesc deviceInfo )
+static void SWF_Line( double x1, double y1, double x2, 
+	double y2, const pGEcontext plotParams, pDevDesc deviceInfo )
 {
 	/* Shortcut pointers to variables of interest. */
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
@@ -850,8 +869,8 @@ static void SWF_Circle( double x, double y, double r,
      * If "fill" is NA_INTEGER then the rectangle should not
      * be filled.
      */
-static void SWF_Rectangle( double x0, double y0, 
-		double x1, double y1, const pGEcontext plotParams, pDevDesc deviceInfo ){
+static void SWF_Rectangle( double x0, double y0, double x1, 
+	double y1, const pGEcontext plotParams, pDevDesc deviceInfo ){
 
 	/* Shortcut pointers to variables of interest. */
 	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
@@ -1115,7 +1134,8 @@ static void addToDisplayList(SWFDisplayItem item){
 	
 }
 
-static void SWF_drawStyledLineTo(SWFShape line, double x_end, double y_end, int lty)
+static void SWF_drawStyledLineTo(SWFShape line, double x_end, 
+	double y_end, int lty)
 {
 	byte dashlist[8];
 	int i, nlty;
@@ -1232,11 +1252,11 @@ static void SWF_drawStyledLineTo(SWFShape line, double x_end, double y_end, int 
 					//draw to the end point of the dash segment
 				SWFShape_drawLineTo(line, x_next, y_next);
 				//if( DEBUG == TRUE )
-				//	Rprintf("\tDrawing dash line to: (%f,%f)\n", x_next, y_next);
+				//Rprintf("\tDrawing dash line to: (%f,%f)\n", x_next, y_next);
 			}else{
 				SWFShape_movePenTo(line, x_next, y_next);
 				//if( DEBUG == TRUE )
-				//	Rprintf("\tMoving dash pen to: (%f,%f)\n", x_next, y_next);
+				//Rprintf("\tMoving dash pen to: (%f,%f)\n", x_next, y_next);
 			}
 			// Update coordinates
 			x_cur = x_next; y_cur = y_next; 
@@ -1297,8 +1317,10 @@ static void SWF_LoadFont(const char *fontFile){
 }
 
 
-	//Return the preloaded font object corresponding to the given face and family
-static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfInfo){
+	//Return the preloaded font object corresponding 
+	//to the given face and family
+static SWFFont selectFont(int fontface, const char *fontfamily, 
+	swfDevDesc *swfInfo){
 	
 	SWFFont font;
 	//Rprintf("%s",fontfamily);
@@ -1365,6 +1387,153 @@ static SWFFont selectFont(int fontface, const char *fontfamily, swfDevDesc *swfI
 	}
 	
 	return(font);
+}
+
+void SWF_addPlayerControls(double *x, double *y){
+	
+	//Get the device info by pointer since this can be called from R
+	pDevDesc deviceInfo = GEcurrentDevice()->dev;
+	
+	// Shortcut pointers to variables of interest. 
+	swfDevDesc *swfInfo = (swfDevDesc *) deviceInfo->deviceSpecific;
+	
+	// General variables
+	SWFDisplayItem          playd;
+	SWFDisplayItem          stopd;
+	
+	// Fill styles we create
+	SWFFillStyle            dark_blue_fill;
+	SWFFillStyle            red_fill;
+	SWFFillStyle            green_fill;
+	
+	// Variables used for the play button
+	SWFAction               play_action;
+	SWFButton               play_button;
+	SWFButtonRecord         play_record_down;
+	SWFButtonRecord         play_record_up;
+	SWFShape                play_shape_down;
+	SWFShape                play_shape_up;
+	
+	// Variables used for the stop button
+	SWFAction               stop_action;
+	SWFButton               stop_button;
+	SWFButtonRecord         stop_record_down;
+	SWFButtonRecord         stop_record_up;
+	SWFShape                stop_shape_down;
+	SWFShape                stop_shape_up;
+	
+	if(swfInfo->haveControls == FALSE){
+		
+		swfInfo->haveControls = TRUE;
+		// Ensure the movie starts out in the "stopped" state
+	    SWFMovie_add(swfInfo->m, (SWFBlock) newSWFAction("_root.stop();"));
+		
+	}
+		
+	swfInfo->ControlsX = *x;
+	swfInfo->ControlsY = deviceInfo->top - *y;
+	
+	// Create the fill styles we'll be using
+	red_fill = newSWFSolidFillStyle(0xf0, 0x00, 0x00, 0x99);
+	dark_blue_fill = newSWFSolidFillStyle(0x00, 0x00, 0x90, 0x99);
+	green_fill = newSWFSolidFillStyle(0x00, 0xcc, 0x00, 0x99);
+	
+	// *** Create the Play button ***
+	
+	// Create a shape to be used in the play button for its "UP" state
+	play_shape_up = newSWFShape();
+	// Use the dark blue fill
+	SWFShape_setRightFillStyle(play_shape_up, green_fill);  
+	SWFShape_setLine(play_shape_up, 1, 0x00, 0x00, 0x00, 0xff);
+	SWFShape_movePenTo(play_shape_up, swfInfo->ControlsX-25, swfInfo->ControlsY);
+	SWFShape_drawLine(play_shape_up,  20,  15);
+	SWFShape_drawLine(play_shape_up, -20,  15);
+	SWFShape_drawLine(play_shape_up,   0, -30);
+	
+	// Create a shape to be used in the play button for its "DOWN" state
+	play_shape_down = newSWFShape();
+	// Use the green fill
+	SWFShape_setRightFillStyle(play_shape_down, dark_blue_fill);  
+	SWFShape_setLine(play_shape_down, 1, 0x00, 0x00, 0x00, 0xff);
+	SWFShape_movePenTo(play_shape_down, swfInfo->ControlsX-25, swfInfo->ControlsY);
+	SWFShape_drawLine(play_shape_down,  20,  15);
+	SWFShape_drawLine(play_shape_down, -20,  15);
+	SWFShape_drawLine(play_shape_down,   0, -30);
+	
+	// Create an empty button object we can use
+	play_button = newSWFButton();
+	
+	// Add the shapes to the button for its various states
+	play_record_up = SWFButton_addCharacter(play_button, 
+		(SWFCharacter) play_shape_up, 
+		SWFBUTTON_UP|SWFBUTTON_HIT|SWFBUTTON_OVER);
+	play_record_down = SWFButton_addCharacter(play_button, 
+		(SWFCharacter) play_shape_down, SWFBUTTON_DOWN);
+	
+	// Add the Play action to the play button 
+	play_action = newSWFAction("_root.play();");
+	SWFButton_addAction(play_button, play_action, SWFBUTTON_MOUSEUP);
+	
+	// *** Create the Stop button ***
+	
+	// Create a shape to be used in the stop button for its "UP" state
+	stop_shape_up = newSWFShape();
+		// Use the green fill
+	SWFShape_setRightFillStyle(stop_shape_up, red_fill);  
+	SWFShape_setLine(stop_shape_up, 1, 0x00, 0x00, 0x00, 0xff);
+	SWFShape_movePenTo(stop_shape_up, 
+		swfInfo->ControlsX , swfInfo->ControlsY + 2.5);
+	SWFShape_drawLine(stop_shape_up,  25,  0);
+	SWFShape_drawLine(stop_shape_up,   0, 25);
+	SWFShape_drawLine(stop_shape_up, -25,  0);
+	SWFShape_drawLine(stop_shape_up,  0, -25);
+	
+	// Create a shape to be used in the stop button for its "DOWN" state
+	stop_shape_down = newSWFShape();
+	// Use the dark blue fill
+	SWFShape_setRightFillStyle(stop_shape_down, dark_blue_fill);  
+	SWFShape_setLine(stop_shape_down, 1, 0x00, 0x00, 0x00, 0xff);
+	SWFShape_movePenTo(stop_shape_down, 
+		swfInfo->ControlsX , swfInfo->ControlsY + 2.5);
+	SWFShape_drawLine(stop_shape_down,  25,   0);
+	SWFShape_drawLine(stop_shape_down,   0,  25);
+	SWFShape_drawLine(stop_shape_down, -25,   0);
+	SWFShape_drawLine(stop_shape_down,   0, -25);
+	
+	// Create an empty button object we can use
+	stop_button = newSWFButton();
+	
+	// Add the shapes to the button for its various states
+	stop_record_up = SWFButton_addCharacter(stop_button, 
+		(SWFCharacter) stop_shape_up, 
+		SWFBUTTON_UP | SWFBUTTON_HIT | SWFBUTTON_OVER);
+	stop_record_down = SWFButton_addCharacter(stop_button, 
+		(SWFCharacter) stop_shape_down, SWFBUTTON_DOWN);
+	
+	// Add the Stop action to the stop button
+	stop_action = newSWFAction("_root.stop();");
+	SWFButton_addAction(stop_button, stop_action, SWFBUTTON_MOUSEUP);
+	
+	// *** Create the movie clip container for the buttons ***
+	
+	// Embed the buttons in a movie clip
+	//movie_clip = newSWFMovieClip();
+	playd = SWFMovie_add(swfInfo->m, (SWFBlock) play_button);
+	stopd = SWFMovie_add(swfInfo->m, (SWFBlock) stop_button);
+	addToDisplayList( playd );
+	addToDisplayList( stopd );
+
+    // Advance the movie clip one frame, else it doesn't get displayed
+    //SWFMovieClip_nextFrame(movie_clip);
+
+    // Add the movie clip to the main movie
+    //buttons_display_item = SWFMovie_add(swfInfo->m, movie_clip);
+	//addToDisplayList( buttons_display_item );
+
+    // Set the movie clip to be shown higher 
+	// in the display stack than the main movie
+    //SWFDisplayItem_setDepth(buttons_display_item, 100);
+	
 }
 
 /* 

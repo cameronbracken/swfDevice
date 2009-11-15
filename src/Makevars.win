@@ -1,4 +1,12 @@
 include Makeconf.win
 
-PKG_CPPFLAGS=-I"${MING_INC_DIR}"
-PKG_LIBS=-L"${MING_LIB_DIR}" -lming
+PKG_CPPFLAGS=-I${INC_DIR} -I. -Iming-lite -Iwindows
+PKG_LIBS=-L${LIB_DIR} -L. -lming -Lwindows -lungif -lpng -lfreetype -lz
+
+.PHONY: libming.a all
+
+all: $(SHLIB)
+$(SHLIB): libming.a
+
+libming.a:
+	(cd ming-lite; make static)
