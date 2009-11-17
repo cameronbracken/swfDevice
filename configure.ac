@@ -51,7 +51,7 @@ if test "$VER2" -eq "$REQ2_MING" ; then
         echo "For building swfDevice, at least libming version 0.4.0 is required."
         exit 1
     fi
-	if test "$VER3" -eg "$REQ3_MING" ; then
+	if test "$VER3" -eq "$REQ3_MING" ; then
         echo "You are using libming version 0.4.0, please make sure you are using Beta 5 or later."
         exit 1
     fi

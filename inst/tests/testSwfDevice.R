@@ -368,7 +368,7 @@ tests <- list(
 		     series
 		}
 
-		lorenz.ts <- sim.cont.full(lorenz.syst, 0, 20, 0.01,
+		lorenz.ts <- sim.cont.full(lorenz.syst, 0, 10, 0.05,
 		                           start.x=c(20,0,30), parms=c(10, 28, -8/3))
 		
 		par(mar=c(2.2,3.2,0,4.2))
@@ -388,12 +388,6 @@ tests <- list(
 			if(length(grep('png',main)) == 0){
 				swfAddPlayerControls(-1,-1)
 			}
-		}
-		scatterplot3d(lorenz.ts,type='n',xlab='x',
-			ylab='y',zlab='z',scale.y=.5, xlim = range(lorenz.ts[,1]),
-			ylim = range(lorenz.ts[,2]), zlim = range(lorenz.ts[,3]))
-		if(length(grep('png',main)) == 0){
-			swfAddPlayerControls(-1,-1)
 		}
 	}
 	
