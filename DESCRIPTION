@@ -8,7 +8,9 @@ Maintainer: Cameron Bracken <cameron.bracken@gmail.com>
 Description: A graphics device which allows for R graphics output as swf 
         (shockwave flash) files. Uses the Ming library 
         (http://www.libming.org/). 
-URL: http://swfdevice.r-forge.r-project.org/
+URL: http://r-forge.r-project.org/projects/swfdevice
 License: GPL (>=2)
-SystemRequirement: libming (>=0.4.0beta5), http://www.libming.org/Releases. Version 0.4.2 is suggested. 
+SystemRequirement: libming (>=0.4.0beta5), http://www.libming.org/Releases. 
+        Version 0.4.2 is suggested. libming in turn depends on the png, gif, 
+        z and freetype libraries.
 LazyLoad: yes

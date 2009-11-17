@@ -15,22 +15,22 @@ __Todo__
 	- gamma                  
 	- canClip: will be much harder than tikzDevice                 	
 	- canChangeGamma
-	- canHAdj: comes with text support
+	- canHAdj: not supported
 	- startps: ditto        
 	- hasTextUTF8: should be possible with ming
 	- wantSymbolUTF8: ditto 
 	- useRotatedTextInContour: ditto 
-* Implement remaining graphics parameters, especially fill! 
+* Implement remaining graphics parameters 
 	- gamma  
 	- lend
 	- ljoin
 	- lmitre
 	- lineheight
 * Graphics primitives 
-	- metricInfo
+	- metricInfo (is currently returning the same metrics for all characters, this is bad but does not severely affect the text placement)
 	- textUTF8       
 	- strWidthUTF8
-* Windows?
+* Working windows build that does not crash when any operation is performed
 
 __Lessons Learned__
 
@@ -39,8 +39,7 @@ __Lessons Learned__
 
 __Planned Features__
 
-* Embedded player controls (play, pause, etc.)
-	- Customizable at the R level 
+* Better control over player controls
 * R Bindings to the ming library (will this really be useful?)
 	- Control subset of parameters at the R level
 * Option to wrap swf in html output
