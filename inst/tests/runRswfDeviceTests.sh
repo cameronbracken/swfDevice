@@ -2,6 +2,6 @@
 
 OPEN=open
 R CMD INSTALL --clean ../../
-Rscript testSwfDevice.R
+Rscript testSwfDevice.R --output-prefix=output
 
 #$OPEN *.swf

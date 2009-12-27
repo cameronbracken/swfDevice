@@ -1,6 +1,16 @@
 #!/usr/bin/env Rscript
 
 require(swfDevice)
+library(getopt)
+
+#Column 3: Argument mask of the flag. An integer. Possible values: 
+# 0=no argument, 1=required argument, 2=optional argument. 
+optspec <- matrix(c('output-prefix', 'p', 2, "character"),ncol=4,byrow=T)
+
+#parse the command line arguments
+opt <- getopt(optspec)
+
+prefix <- ifelse(!is.null(opt$"output-prefix"),opt$"output-prefix",'.')
 
 tests <- list(
 	
@@ -31,7 +41,8 @@ tests <- list(
 
 		legend( x='top', title='Legend Test', legend=c('Hello'), inset=0.05 )
 
-		legend( 6, 4, title='Another Legend Test', legend=c('Test 1','Test 2'), pch=c(1,16))
+		legend( 6, 4, title='Another Legend Test', 
+			legend=c('Test 1','Test 2'), pch=c(1,16))
 
 	},
 
@@ -50,7 +61,8 @@ tests <- list(
 		ry <- c(-1,1)/2 + range(iy)
 
 		# Set up plot area
-		plot(rx, ry, type="n", axes=F, xlab='', ylab='', main=main, sub="Standard R plotting characters")
+		plot(rx, ry, type="n", axes=F, xlab='', ylab='', 
+			main=main, sub="Standard R plotting characters")
 
 		# Plot characters.
 		for( i in 1:26 ){
@@ -137,28 +149,31 @@ tests <- list(
 	    points(rnorm(500), rnorm(500), pch=21, bg=rainbow(50,alpha=.5), cex=10)
 	},
 	
-	#test of fontface and fontfamily
 	function(main){
 		
-		plot(16:1,1:16,type='n',axes=F,xlim=c(0,16),
-			ylim=c(1,16),xlab='',ylab='')
-		box()
-		text(1,16,"serif normal",font=1,family='serif')
-		text(2,15,"serif bold",font=2,family='serif')
-		text(3,14,"serif italic",font=3,family='serif')
-		text(4,13,"serif bold italic",font=4,family='serif')
-		text(5,12,"sans normal",font=1,family='sans')
-		text(6,11,"sans bold",font=2,family='sans')
-		text(7,10,"sans italic",font=3,family='sans')
-		text(8,9,"sans bold italic",font=4,family='sans')
-		text(9,8,"mono normal",font=1,family='mono')
-		text(10,7,"mono bold",font=2,family='mono')
-		text(11,6,"mono italic",font=3,family='mono')
-		text(12,5,"mono bold italic",font=4,family='mono')
-		text(13,4,"default normal",font=1)
-		text(14,3,"default bold",font=2)
-		text(15,2,"default italic",font=3)
-		text(16,1,"default bold italic",font=4)
+		par(mar=rep(0, 4), cex=0.7)
+		plot.new()
+		plot.window(c(0.05, 0.95), 0:1)
+		family <- c("sans", "serif", "mono")
+		face <- 1:4
+		for (i in 1:4)
+		  for (j in 1:3) {
+		    par(family=family[j], lheight=1.5)
+		    text(seq(.15, .85, length=4)[i],
+		         seq(.25, .75, length=3)[j],
+		         paste("family=\"", family[j], "\"\nfont=", face[i], sep=""),
+		         font=face[i])
+		  }
+		segments(.02, c(.125, .375, .625, .875), 
+		         .98, c(.125, .375, .625, .875), col="grey")
+		segments(.02, c(.125, .375, .625, .875) - .01, 
+		         .02, c(.125, .375, .625, .875) + .01, col="grey")
+		segments(.98, c(.125, .375, .625, .875) - .01, 
+		         .98, c(.125, .375, .625, .875) + .01, col="grey")
+		rect(c(.27, .5, .73) - .01,
+		     .1,
+		     c(.27, .5, .73) + .01,
+		     .9, col="white", border=NA)
 		
 	},
 
@@ -196,7 +211,8 @@ tests <- list(
 		zfacet <- z[-1,-1] + z[-1,-ncz] + z[-nrz, -1] + z[-nrz, -ncz]
 		facetcol <- cut(zfacet, nbcol)
 
-		persp(x, y, z, col=color[facetcol], phi=30, theta=-30, ticktype='detailed', main=main )
+		persp(x, y, z, col=color[facetcol], 
+				phi=30, theta=-30, ticktype='detailed', main=main )
 
 	},
 	
@@ -347,10 +363,13 @@ tests <- list(
 			leader[2] <- leader[2] + d*sin(ang*pi/180)
 			if(leader[1] < -3 | leader[2] < -3 | leader[1] > 3 | leader[2] > 3) 
 				ang <- (90 + ang) %% 360
-			followers[,1] <- followers[,1] + p*runif(n) * (leader[1] - followers[,1])
-			followers[,2] <- followers[,2] + p*runif(n) * (leader[2] - followers[,2])
+			followers[,1] <- followers[,1] + 
+				p*runif(n) * (leader[1] - followers[,1])
+			followers[,2] <- followers[,2] + 
+				p*runif(n) * (leader[2] - followers[,2])
 		}	
-		plot(followers,xlab='',ylab='',main=main,xlim=c(-3,3),ylim=c(-3,3),type='n')
+		plot(followers,xlab='',ylab='',
+			main=main,xlim=c(-3,3),ylim=c(-3,3),type='n')
 		if(length(grep('png',main)) == 0){
 			swfAddPlayerControls('topright')
 		}
@@ -372,8 +391,9 @@ tests <- list(
 		                           start.x=c(20,0,30), parms=c(10, 28, -8/3))
 		
 		par(mar=c(2.2,3.2,0,4.2))
-		scatterplot3d(rbind(lorenz.ts[1,]),type='l',color='steelblue',xlab='x',
-			ylab='y',zlab='z',scale.y=.5, xlim = range(lorenz.ts[,1]),
+		scatterplot3d(rbind(lorenz.ts[1,]),type='l',color='steelblue',
+			xlab='x',ylab='y',zlab='z',scale.y=.5, 
+			xlim = range(lorenz.ts[,1]),
 			ylim = range(lorenz.ts[,2]), zlim = range(lorenz.ts[,3]))
 		end <- 2
 		if(length(grep('png',main)) == 0){
@@ -398,10 +418,11 @@ for( i in 1:length(tests)){
 	
 	n <- sprintf('%02d',i)
 	cat('Running Test', n, 'of', length(tests) ,'\n')
-	name <- paste('swfDevice_test',n,'.swf',sep='')
-	pngname <- paste('swfDevice_test',n,'.png',sep='')
-	swf(name,frameRate=20)
-	tests[[i]]( name )
+	if(!file.exists( prefix )) dir.create( prefix, recursive = TRUE)
+	swfname <- file.path(prefix, paste('swfDevice_test',n,'.swf',sep=''))
+	pngname <- file.path(prefix, paste('swfDevice_test',n,'.png',sep=''))
+	swf(swfname,frameRate=20)
+	tests[[i]]( swfname )
 	dev.off()
 	png(pngname,type='cairo',width=504,height=504)
 	tests[[i]]( pngname )

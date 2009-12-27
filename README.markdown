@@ -31,6 +31,7 @@ __Todo__
 	- textUTF8       
 	- strWidthUTF8
 * Working windows build that does not crash when any operation is performed
+* Fix mixed up font faces
 
 __Lessons Learned__
 

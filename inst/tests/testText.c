@@ -16,7 +16,8 @@ int main(void)
         Ming_init();
         test_movie = newSWFMovieWithVersion(7);
 
-        // Set the desired compression level for the output (9 = maximum compression)
+        // Set the desired compression level 
+		// for the output (9 = maximum compression)
         Ming_setSWFCompression(9);
 
         // Set the background color for the movie
@@ -29,7 +30,7 @@ int main(void)
         SWFMovie_setRate(test_movie, 24.0);
 
         // Load a font from disk
-        font_object = newSWFFont_fromFile("../fonts/vera/Vera.ttf");
+        font_object = newSWFFont_fromFile("../../fonts/vera/Vera.ttf");
         if (NULL == font_object)
         {
                 // Something went wrong, so exit
