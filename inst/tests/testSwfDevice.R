@@ -13,18 +13,13 @@ opt <- getopt(optspec)
 prefix <- ifelse(!is.null(opt$"output-prefix"),opt$"output-prefix",'.')
 
 tests <- list(
-	
-	#Test the basics, there is actually alot going on here
-	function(main){
-	    #test a circle and some simple text
-	    plot(1, axes=F, xlab='', ylab='', main=main)
-	    text(1, 1.1, 'Some Text')
-	},
 
+	#test a rectangular box
 	function(main){
-	    #test a rectangular box
 	    plot(1, type='n', axes=F, main=main)
 	    box()
+		
+		return('Unfilled Rectangle')
 	},
 
 	# Test of text color.
@@ -32,6 +27,8 @@ tests <- list(
 	    plot(1, type='n', main=main)
 	    text(0.8,0.8,'red',col='red')
 			text(1.2,1.2,'blue',col='blue',cex=2)
+				
+		return('Text Color')
 	},
 
 	# Plotting test- with legend
@@ -43,11 +40,12 @@ tests <- list(
 
 		legend( 6, 4, title='Another Legend Test', 
 			legend=c('Test 1','Test 2'), pch=c(1,16))
+			
+		return('Legend String Placememt')
 
 	},
 
 	# Plotting test- pch values 0-25
-
 	function(main){
 
 		# Magic stuff taken from example(points)
@@ -72,7 +70,7 @@ tests <- list(
 			text(ix[i]-0.3, iy[i], i-1 )
 
 		}
-
+		return('Point types (pch)')
 	},
 
 	#tests a outline colored circle
@@ -80,18 +78,24 @@ tests <- list(
 	    plot(-2:2, -2:2, type = "n", axes=F, xlab='', ylab='', main=main)
 	    points(rnorm(10), rnorm(10), col = "red")
 	    points(rnorm(10)/2, rnorm(10)/2, col = "blue")
+	
+		return('Outlined colored circle')
 	},
 
 	#test for filled circle color
 	function(main){
 	    plot(-2:2, -2:2, type = "n", axes=F, xlab='', ylab='', main=main)
 	    points(rnorm(10), rnorm(10), pch=21, col='blue', bg='forestgreen')
+	
+		return('Filled Circle')
 	},
 
 	#test for a colored line
 	function(main){
 	    plot(c(0,1), c(0,1), type = "l", axes=F, 
 	            xlab='', ylab='', col='red3', main=main)
+	
+		return('Colored Line')
 	},
 
 
@@ -99,12 +103,16 @@ tests <- list(
 	function(main){
 	    plot(1, axes=F, xlab='', ylab='', cex=10, main=main)
 	    points(1, cex=.5)
+	
+		return('Cex')
 	},
 
 	#test for filled color rectangle
 	function(main){
 	    plot(-2:2, -2:2, type = "n", axes=F, xlab='', ylab='', main=main)
 	    points(rnorm(10), rnorm(10), pch=22, col='red', bg='gold')
+	
+		return('Filled Color Rectangle')
 	},
 
 	#test for line types
@@ -113,6 +121,8 @@ tests <- list(
 	            axes=F, xlab='', ylab='', main=main)
 	    for(i in 0:6)
 	    	lines(c(0, 1), c(i, i), lty=i)
+	
+		return('Line Types')
 	},
 
 	#test for line weight
@@ -121,6 +131,17 @@ tests <- list(
 	            axes=F, xlab='', ylab='', main=main)
 	    for(i in 0:6)
 	    	lines(c(0,1), c(i,i), lwd=i)
+		
+		return('Line Weight')
+	},
+	
+	#Test the basics, there is actually alot going on here
+	function(main){
+	    #test a circle and some simple text
+	    plot(1, axes=F, xlab='', ylab='', main=main)
+	    text(1, 1.1, 'Some Text')
+	
+		return('The obligatory plot(1) test')
 	},
 	
 	#test of drawing direction with dashed lines
@@ -135,20 +156,27 @@ tests <- list(
 		lines(c(0,1),c(0,0),type='o',lty=3)
 		lines(c(0,0),c(0,1),type='o',lty=3)
 		
+		return('Drawing Directions')
+		
 	},
 
 	#test for transparency
 	function(main){
 	    plot(-2:2, -2:2, type = "n", axes=F, xlab='', ylab='', main=main)
 	    points(rnorm(50), rnorm(50), pch=21, bg=rainbow(50,alpha=.5), cex=10)
+		
+		return('Transparency')
 	},
 
 	#test of many points for file size
 	function(main){
 	    plot(-2:2, -2:2, type = "n", axes=F, xlab='', ylab='', main=main)
 	    points(rnorm(500), rnorm(500), pch=21, bg=rainbow(50,alpha=.5), cex=10)
+		
+		return('Many Overlapping Points for Filesize')
 	},
 	
+	#Font families and faces
 	function(main){
 		
 		par(mar=rep(0, 4), cex=0.7)
@@ -175,6 +203,7 @@ tests <- list(
 		     c(.27, .5, .73) + .01,
 		     .9, col="white", border=NA)
 		
+		return('Font Faces and Families')
 	},
 
 	# Test with many strings and complex clipping from help(contour)
@@ -188,6 +217,8 @@ tests <- list(
 	    contour(x, x, z, ylim = c(1, 6), method = "simple", labcex = 1)
 	    contour(x, x, z, ylim = c(-6, 6), nlev = 20, lty = 2, method = "simple")
 	    par(op)
+	
+		return('Many Strings With Complex Clipping')
 	},
 	
 	
@@ -213,7 +244,8 @@ tests <- list(
 
 		persp(x, y, z, col=color[facetcol], 
 				phi=30, theta=-30, ticktype='detailed', main=main )
-
+		
+		return('Persp Plot')
 	},
 	
 	# Neat example of image.plot using the fields package.
@@ -226,7 +258,8 @@ tests <- list(
 		data(RCMexample)
 	
 		image.plot( RCMexample$x, RCMexample$y, RCMexample$z[,,8], main=main )
-	
+		
+		return('Complex Image Plot')
 	},
 	
 	# from the ggplot2 book section "Fitting multiple models"
@@ -238,7 +271,8 @@ tests <- list(
 		sink()
 		print(qplot(carat, price, data = diamonds, geom = "smooth", 
 		colour = color, main = main))
-
+		
+		return('Transparent Polygon Fill')
 	},
 	
 	#Animation examples
@@ -250,6 +284,7 @@ tests <- list(
 		ani.options(interval = .001)
 		knn.ani()
 		
+		return('Animation Package KNN')
 	},
 	
 	function(main){
@@ -260,6 +295,7 @@ tests <- list(
 		ani.options(interval = 0.001)
 		mwar.ani(lty.rect = 3, pch = 21, col = "red", bg = "yellow",type='o')
 		
+		return('Animation Package Moving Window AR')
 	},
 	
 	function(main){
@@ -269,6 +305,8 @@ tests <- list(
 		sink()
 		ani.options(interval = 0.001)
 		cv.ani(x = runif(15), k = 15)
+		
+		return('Animation Package Cross Validation')
 		
 	},
 	
@@ -280,6 +318,7 @@ tests <- list(
 		ani.options(interval = 0.001)
 		kmeans.ani()
 		
+		return('Animation Package K Means')
 	},
 	
 	function(main){
@@ -290,6 +329,7 @@ tests <- list(
 		ani.options(interval = 0.001)
 		clt.ani(type = "h")
 		
+		return('Animation Package CLT 1')
 	},
 	
 	function(main){
@@ -300,6 +340,7 @@ tests <- list(
 		ani.options(interval = 0.001)
 		lln.ani(pch = ".")
 		
+		return('Animation Package CLT 2')
 	},
 	
 	function(main){
@@ -337,6 +378,7 @@ tests <- list(
 			swfAddPlayerControls('bottomleft')
 			swfAddPlayerControls('center')
 		}
+		return('Player Control Placement')
 	},
 	
 	function(main){
@@ -373,6 +415,7 @@ tests <- list(
 		if(length(grep('png',main)) == 0){
 			swfAddPlayerControls('topright')
 		}
+		return('Animation of medium complexity')
 	},
 	
 	function(main){
@@ -387,7 +430,7 @@ tests <- list(
 		     series
 		}
 
-		lorenz.ts <- sim.cont.full(lorenz.syst, 0, 10, 0.05,
+		lorenz.ts <- sim.cont.full(lorenz.syst, 0, 6, 0.05,
 		                           start.x=c(20,0,30), parms=c(10, 28, -8/3))
 		
 		par(mar=c(2.2,3.2,0,4.2))
@@ -409,34 +452,40 @@ tests <- list(
 				swfAddPlayerControls(-1,-1)
 			}
 		}
+		
+		return('Long Animation')
 	}
 	
 	
 )
 	
+cat('\n-- Running Test Suite --\n')
 for( i in 1:length(tests)){
 	
 	n <- sprintf('%02d',i)
-	cat('Running Test', n, 'of', length(tests) ,'\n')
+	cat('Running Test', n, 'of', length(tests),'\b: ')
 	if(!file.exists( prefix )) dir.create( prefix, recursive = TRUE)
 	swfname <- file.path(prefix, paste('swfDevice_test',n,'.swf',sep=''))
 	pngname <- file.path(prefix, paste('swfDevice_test',n,'.png',sep=''))
 	swf(swfname,frameRate=20)
-	tests[[i]]( swfname )
+	test.name <- tests[[i]]( swfname )
 	dev.off()
+	cat(test.name,'\n')
 	png(pngname,type='cairo',width=504,height=504)
 	tests[[i]]( pngname )
 	dev.off()
 	
 }
+cat('-- Finished Running Test Suite --\n')
 
-file.remove('swfs.html')
-file.create('swfs.html')
-swfs <- list.files(,"[0-9][0-9][.]swf$")
-pngs <- list.files(,"[0-9][0-9][.]png$")
+html <- 'swfs.html'
+quiet <- file.remove(html)
+quiet <- file.create(html)
+swfs <- list.files(prefix,"[0-9][0-9][.]swf$")
+pngs <- list.files(prefix,"[0-9][0-9][.]png$")
 
 for(i in 1:length(swfs)){
-	system(paste('swfdump --xhtml',swfs[i],'>> swfs.html'))
-	cat('<img src=\'',pngs[i],'\'/>\n',file='swfs.html',append=T,sep='')
-	cat('<br/>\n',file='swfs.html',append=T)
+	system(paste('cd',prefix,'; swfdump --xhtml',swfs[i],'>>',html))
+	cat('<img src=\'',pngs[i],'\'/>\n',file=file.path(prefix,html),append=T,sep='')
+	cat('<br/>\n',file=file.path(prefix,html),append=T)
 }
