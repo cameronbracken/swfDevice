@@ -430,7 +430,9 @@ tests <- list(
 		     series
 		}
 
-		lorenz.ts <- sim.cont.full(lorenz.syst, 0, 6, 0.05,
+		#3, 0.01263 (end == 237) no freeze
+		#3, 0.01260 (end == 238) freeze
+		lorenz.ts <- sim.cont.full(lorenz.syst, 0, 3, 0.0126,
 		                           start.x=c(20,0,30), parms=c(10, 28, -8/3))
 		
 		par(mar=c(2.2,3.2,0,4.2))
@@ -453,14 +455,14 @@ tests <- list(
 			}
 		}
 		
-		return('Long Animation')
+		return(paste('Long Animation',end,'Frames'))
 	}
 	
 	
 )
 	
 cat('\n-- Running Test Suite --\n')
-for( i in 1:length(tests)){
+for( i in 29:length(tests)){
 	
 	n <- sprintf('%02d',i)
 	cat('Running Test', n, 'of', length(tests),'\b: ')
