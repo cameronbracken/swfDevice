@@ -1,6 +1,0 @@
-#!/bin/sh
-
-cd src/ming-lite
-make clean
-rm -rf src/*.o src/*.a src/*.dll src/Makeconf.win
-rm -rf inst/libs src/windows
