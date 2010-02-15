@@ -47,6 +47,21 @@ typedef struct swfDevDesc{
 	DisplayList *displayListTail;
 } swfDevDesc;
 
+/*#define SERIF	1
+#define SANSERIF	2
+#define MONO	3
+
+static struct FontFamilyLookupTable {
+	char *string;
+	int code;
+} table[] = {
+	{"serif",	SERIF},
+	{"sans",	SANS},
+	{"mono",	MONO},
+};*/
+
+
+
 /* Function Prototypes */
 
 static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,

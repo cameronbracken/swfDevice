@@ -3,7 +3,7 @@ __Status__: Pre-Alpha
 
 __Description__: This package provides the swf() graphics device in R.  Using Ming library (http://www.libming.org/) , this device can create flash movies from R plotting commands.  My vision for this device is that multipage output will be rendered as movies with specifiable parameters and optional buttons for control. 
 
-__System Requirements__: Depends on libming version >= 0.4.0beta5.  This version introduced support for ttf fonts without conversion.  The windows version will attempt to compile ming from source.
+__System Requirements__: Depends on libming version >= 0.4.0beta5.  This version introduced support for ttf fonts without conversion.  Windows is not supported in this version.  
 
 __Todo__
 

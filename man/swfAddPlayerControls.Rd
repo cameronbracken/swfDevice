@@ -7,7 +7,7 @@ swfAddPlayerControls
 Generates play and stop buttons at the specified position. 
 }
 \usage{
-swfAddPlayerControls <- function(x, y = NULL, inset=.1, 
+swfAddPlayerControls(x, y = NULL, inset=.1, 
 	play.col = "green", stop.col = "red")
 }
 \arguments{
