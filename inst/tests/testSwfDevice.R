@@ -40,6 +40,9 @@ tests <- list(
 
 		legend( 6, 4, title='Another Legend Test', 
 			legend=c('Test 1','Test 2'), pch=c(1,16))
+		
+		legend( 'bottomright', title='Yet Another Legend Test', 
+			legend=c('Test A','Test B'), pch=c(2,17))
 			
 		return('Legend String Placememt')
 
@@ -430,7 +433,7 @@ tests <- list(
 		     series
 		}
 
-		lorenz.ts <- sim.cont.full(lorenz.syst, 0, 6, 0.05,
+		lorenz.ts <- sim.cont.full(lorenz.syst, 0, 6, 0.03,
 		                           start.x=c(20,0,30), parms=c(10, 28, -8/3))
 		
 		par(mar=c(2.2,3.2,0,4.2))
@@ -479,7 +482,7 @@ for( i in 1:length(tests)){
 cat('-- Finished Running Test Suite --\n')
 
 html <- 'swfs.html'
-quiet <- file.remove(html)
+quiet <- file.remove(file.path(prefix,html))
 quiet <- file.create(html)
 swfs <- list.files(prefix,"[0-9][0-9][.]swf$")
 pngs <- list.files(prefix,"[0-9][0-9][.]png$")

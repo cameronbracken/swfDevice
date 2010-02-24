@@ -31,7 +31,7 @@
 #include <math.h>
 
 #include "swfDevice.h"
-#define DEBUG FALSE
+#define DEBUG TRUE
 
 SEXP swfDevice ( SEXP args ){
 
@@ -379,6 +379,8 @@ static Rboolean SWF_Setup( pDevDesc deviceInfo, const char *fileName,
 	deviceInfo->deactivate = SWF_Deactivate;
 	deviceInfo->locator = SWF_Locator;
 	deviceInfo->mode = SWF_Mode;
+	//deviceInfo->raster = SWF_Raster;
+    //deviceInfo->cap = SWF_Cap;
 
 	/* Call SWF_Open to create and initialize the output file. */
 	if( !SWF_Open( deviceInfo ) )
@@ -431,6 +433,8 @@ static Rboolean SWF_Open( pDevDesc deviceInfo ){
 	
 	// Set the total number of frames in the movie to 1
 	SWFMovie_setNumberOfFrames(swfInfo->m, 1);
+	
+	SWFMovie_setScriptLimits(swfInfo->m, 500, 45);
 
 	return TRUE;
 
@@ -599,8 +603,6 @@ static void SWF_MetricInfo( int c, const pGEcontext plotParams,
 	}
 
 	SWFText text_object = newSWFText();
-	//char *s;
-	//sprintf(s, "%c", c);
 
 	// Tell the text object to use the font previously loaded
 	SWFText_setFont(text_object, swfInfo->ss);
@@ -610,11 +612,11 @@ static void SWF_MetricInfo( int c, const pGEcontext plotParams,
 
 	// Add a string to the text object
 	//FIXME!!! pass real character.
-	SWFText_addString(text_object, "a", NULL);
+	SWFText_addString(text_object, "g", NULL);
 
 	double a = SWFText_getAscent(text_object);
 	double d = SWFText_getDescent(text_object);
-	double w = SWFText_getStringWidth(text_object, "a");
+	double w = SWFText_getStringWidth(text_object, "g");
 	
 	if( swfInfo->debug == TRUE ){
 		fprintf(swfInfo->logFile,
@@ -669,11 +671,13 @@ static double SWF_StrWidth( const char *str,
 		fprintf(swfInfo->logFile, "Honoring ps=%7.2f, cex=%7.2f\n",
 			plotParams->ps, plotParams->cex);
 	
+	SWFText_addString(text_object, str, NULL);
+	
 	float width = SWFText_getStringWidth(text_object, str);
 	
 	if( swfInfo->debug == TRUE ){
 		fprintf(swfInfo->logFile,
-			"\tCalculated Width of \"%s\" as %7.2f\n", str, width);
+			"\tCalculated Width of \"%s\" as %8.2f\n", str, width);
 		fflush(swfInfo->logFile);
 	}
 	
@@ -1325,17 +1329,6 @@ static SWFFont selectFont(int fontface, const char *fontfamily,
 	SWFFont font;
 	//Rprintf("%s",fontfamily);
 	
-	/*switch(classifyFontFamily(fontfamily)) {
-		case SERIF:
-			...
-
-		case SANS:
-			...
-
-		case MONO:
-			...
-	}*/
-	
 	switch(fontface){
 		
 		case 1: //plain
@@ -1359,9 +1352,9 @@ static SWFFont selectFont(int fontface, const char *fontfamily,
 			}else if(strcmp(fontfamily, "sans") == 0){
 				font = swfInfo->ss_b;
 			}else if(fontfamily== '\0'){
-				font = swfInfo->se_b;
+				font = swfInfo->ss_b;
 			}else{
-				font = swfInfo->se_b;
+				font = swfInfo->ss_b;
 			}
 			break;
 		case 3: //italic
@@ -1372,9 +1365,9 @@ static SWFFont selectFont(int fontface, const char *fontfamily,
 			}else if(strcmp(fontfamily, "sans") == 0){
 				font = swfInfo->ss_i;
 			}else if(fontfamily == '\0'){
-				font = swfInfo->se_i;
+				font = swfInfo->ss_i;
 			}else{
-				font = swfInfo->se_i;
+				font = swfInfo->ss_i;
 			}
 			break;
 		case 4:
@@ -1386,9 +1379,9 @@ static SWFFont selectFont(int fontface, const char *fontfamily,
 			}else if(strcmp(fontfamily, "sans") == 0){
 				font = swfInfo->ss_b_i;
 			}else if(fontfamily == '\0'){
-				font = swfInfo->se_b_i;
+				font = swfInfo->ss_b_i;
 			}else{
-				font = swfInfo->se_b_i;
+				font = swfInfo->ss_b_i;
 			}
 			break;
 		case 5:
@@ -1560,6 +1553,20 @@ static void SWF_Activate( pDevDesc deviceInfo ){}
 static void SWF_Deactivate( pDevDesc deviceInfo ){}
 static Rboolean SWF_Locator( double *x, double *y, pDevDesc deviceInfo ){
 	return FALSE;
+}
+
+static SEXP SWF_Cap(pDevDesc deviceInfo){
+	
+    warning("%s not available for this device", "Raster capture");
+    return R_NilValue;
+
+}
+
+static void SWF_Raster(unsigned int *raster, int w, int h,
+                       double x, double y, double width, double height,
+                       double rot, Rboolean interpolate,
+                       const pGEcontext plotParams, pDevDesc deviceInfo){
+    warning("%s not available for this device", "Raster rendering");
 }
 
 /*

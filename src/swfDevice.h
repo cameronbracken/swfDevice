@@ -47,20 +47,6 @@ typedef struct swfDevDesc{
 	DisplayList *displayListTail;
 } swfDevDesc;
 
-/*#define SERIF	1
-#define SANSERIF	2
-#define MONO	3
-
-static struct FontFamilyLookupTable {
-	char *string;
-	int code;
-} table[] = {
-	{"serif",	SERIF},
-	{"sans",	SANS},
-	{"mono",	MONO},
-};*/
-
-
 
 /* Function Prototypes */
 
@@ -109,6 +95,11 @@ static void SWF_Activate( pDevDesc deviceInfo );
 static void SWF_Deactivate( pDevDesc deviceInfo );
 static Rboolean SWF_Locator( double *x, double *y, pDevDesc deviceInfo );
 static void SWF_Mode( int mode, pDevDesc deviceInfo );
+static SEXP SWF_Cap(pDevDesc deviceInfo);
+static void SWF_Raster(unsigned int *raster, int w, int h,
+                       double x, double y, double width, double height,
+                       double rot, Rboolean interpolate,
+                       const pGEcontext plotParams, pDevDesc deviceInfo);
 
 /*Custom functions*/
 static void SWF_SetLineStyle(SWFShape shape, const pGEcontext plotParams, swfDevDesc *swfInfo );

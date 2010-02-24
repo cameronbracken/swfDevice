@@ -5,7 +5,7 @@ __Description__: This package provides the swf() graphics device in R.  Using Mi
 
 __System Requirements__: Depends on libming version >= 0.4.0beta5.  This version introduced support for ttf fonts without conversion.  Windows is not supported in this version.  
 
-__Todo__
+__Todo for Version 1.0__
 
 * Device features to address/investigate
 	- xCharOffset yCharOffset            
@@ -13,7 +13,8 @@ __Todo__
 	- ipr: pixels per inch             
 	- cra: default character size in pixels
 	- gamma                  
-	- canClip: will be much harder than tikzDevice                 	
+	- canClip: will be much harder than tikzDevice
+		- Manually clip lines, polylines, polygons
 	- canChangeGamma
 	- canHAdj: not supported
 	- startps: ditto        
@@ -30,8 +31,7 @@ __Todo__
 	- metricInfo (is currently returning the same metrics for all characters, this is bad but does not severely affect the text placement)
 	- textUTF8       
 	- strWidthUTF8
-* Working windows build that does not crash when any operation is performed
-* Fix mixed up font faces
+* Working windows build
 
 __Lessons Learned__
 
@@ -41,6 +41,7 @@ __Lessons Learned__
 __Planned Features__
 
 * Better control over player controls
+	- User defined buttons
 * R Bindings to the ming library (will this really be useful?)
 	- Control subset of parameters at the R level
 * Option to wrap swf in html output
